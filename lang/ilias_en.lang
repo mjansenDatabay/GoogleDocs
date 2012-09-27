@@ -1,0 +1,24 @@
+<!-- language file start -->
+obj_xgdo#:#Google Docs Document
+objs_xgdo#:#Google Docs Documents
+obj_xgdo_duplicate#:#Copy
+objs_xgdo_duplicate#:#Copy Google Docs Document
+xgdo_add#:#Add Google Docs Document
+xgdo_new#:#Add new Google Docs Document
+xgdo_read#:#Read access to Google Docs Documents
+xgdo_write#:#Edit Google Docs Document
+xgdo_delete#:#Delete Google Docs Document
+xgdo_edit_permission#:#Change Permissions
+crs_create_xgdo#:#Create Google Docs Document
+grp_create_xgdo#:#Create Google Docs Document
+fold_create_xgdo#:#Create Google Docs Document
+root_create_xgdo#:#Create Google Docs Document
+cat_create_xgdo#:#Create Google Docs Document
+content#:#Content
+properties#:#Settings
+edit_properties#:#Edit Settings
+title#:#Title
+description#:#Description
+save#:#Save
+cancel#:#Cancel
+edit#:#Edit

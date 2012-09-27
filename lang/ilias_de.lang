@@ -1,0 +1,24 @@
+<!-- language file start -->
+obj_xgdo#:#Google Docs-Dokument
+objs_xgdo#:#Google Docs-Dokument
+obj_xgdo_duplicate#:#Kopieren
+objs_xgdo_duplicate#:#Google Docs-Dokumente kopieren
+xgdo_add#:#Neues Google Docs-Dokument anlegen
+xgdo_new#:#Neues Google Docs-Dokument anlegen
+xgdo_read#:#Lesezugriff auf Google Docs-Dokumente
+xgdo_write#:#Google Docs-Dokument bearbeiten
+xgdo_delete#:#Google Docs-Dokument löschen
+xgdo_edit_permission#:#Rechteeinstellungen Ändern
+crs_create_xgdo#:#Neues Google Docs-Dokument anlegen
+grp_create_xgdo#:#Neues Google Docs-Dokument anlegen
+fold_create_xgdo#:#Neues Google Docs-Dokument anlegen
+root_create_xgdo#:#Neues Google Docs-Dokument anlegen
+cat_create_xgdo#:#Neues Google Docs-Dokument anlegen
+content#:#Inhalt
+properties#:#Einstellungen
+edit_properties#:#Einstellungen Bearbeiten
+title#:#Titel
+description#:#Beschreibung
+save#:#Speichern
+cancel#:#Abbrechen
+edit#:#Bearbeiten
