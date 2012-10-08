@@ -4,11 +4,13 @@
 require_once 'Services/Repository/classes/class.ilObjectPluginGUI.php';
 require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
 
+require_once dirname(__FILE__).'/../interfaces/interface.ilGoogleDocsConstants.php';
+
 /**
  * @ilCtrl_isCalledBy ilObjGoogleDocsGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI
  */
-class ilObjGoogleDocsGUI extends ilObjectPluginGUI
+class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants
 {
 	/**
 	 * @var ilPropertyFormGUI
@@ -107,6 +109,18 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI
 	public function  initCreateForm($a_new_type)
 	{
 		$form = parent::initCreateForm($a_new_type);
+		 
+		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('document_type'), 'doc_type');
+		$radio_doctype->setRequired(true);
+		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), ilGoogleDocsConstants::GOOGLE_DOC);
+		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), ilGoogleDocsConstants::GOOGLE_XLS);
+		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), ilGoogleDocsConstants::GOOGLE_PPT);
+
+		$radio_doctype->addOption($option_1);
+		$radio_doctype->addOption($option_2);
+		$radio_doctype->addOption($option_3);
+	
+		$form->addItem($radio_doctype);
 
 		return $form;
 	}
@@ -120,11 +134,17 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI
 		 * @var $tpl ilTemplate
 		 * @var $ilTabs ilTabsGUI
 		 */
-		global $tpl, $ilTabs;
+		global $tpl, $ilTabs, $lng;
 
 		$ilTabs->activateTab("content");
-
-		$tpl->setContent('Hello World');
+		
+		$form =  new ilPropertyFormGUI();
+		$url = new ilNonEditableValueGUI($lng->txt('url'));
+		$url->setValue($this->object->getDocUrl());
+		$form->addItem($url);
+		
+		
+		$tpl->setContent($form->getHTML());
 	}
 
 	/**
@@ -167,6 +187,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI
 		$ta = new ilTextAreaInputGUI($this->txt('description'), 'desc');
 		$this->form->addItem($ta);
 
+		$doc_info = new ilNonEditableValueGUI($this->plugin->txt('doctype'), 'doc_type');
+		$this->form->addItem($doc_info);
+
 		$this->form->addCommandButton('updateProperties', $this->txt('save'));
 	}
 
@@ -177,6 +200,23 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI
 	{
 		$values['title'] = $this->object->getTitle();
 		$values['desc']  = $this->object->getDescription();
+
+		if($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_DOC)
+			$doc_type = $this->plugin->txt('doctype_doc');
+
+		elseif($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_XLS)
+			$doc_type = $this->plugin->txt('doctype_xls');
+
+		elseif($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_PPT)
+			$doc_type = $this->plugin->txt('doctype_ppt');
+	
+		else
+		{
+			$doc_type= $this->plugin->txt('doctype_not_valid');
+		}
+		
+		$values['doc_type'] = $doc_type;
+
 		$this->form->setValuesByArray($values);
 	}
 

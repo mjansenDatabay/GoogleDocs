@@ -22,3 +22,12 @@ description#:#Description
 save#:#Save
 cancel#:#Cancel
 edit#:#Edit
+google_login#:#Google-Login
+created_doc_successfully#:#The creation of a document was successfully. 
+creating_doc_failed#:#The creation of a document failed.
+check_connection#:#Check Connection
+doctype_doc#:#Document
+doctype_xls#:#Spreadsheet
+doctype_ppt#:#Presentation
+doctype#:#File-Type
+doctype_not_valid#:#The file-type is not valid.

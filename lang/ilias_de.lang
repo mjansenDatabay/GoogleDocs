@@ -22,3 +22,12 @@ description#:#Beschreibung
 save#:#Speichern
 cancel#:#Abbrechen
 edit#:#Bearbeiten
+google_login#:#Google-Login
+created_doc_successfully#:#Das Erstellen eines Dokuments war erfolgreich.
+creating_doc_failed#:#Das Erstellen eines Dokuments schlug fehl.
+check_connection#:#Überprüfung der Verbindung
+doctype_doc#:#Dokument
+doctype_xls#:#Tabelle
+doctype_ppt#:#Presentation
+doctype#:#Datei-Typ
+doctype_not_valid#:#Der Datei-Typ ist fehlerhaft. 
