@@ -39,7 +39,7 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 	{
 		global $ilCtrl, $lng, $tpl, $ilToolbar;
 		
-		
+		// @todo: Show button only if all preconditions are given
 		$ilToolbar->addButton($this->pluginObj->txt('check_connection'), $ilCtrl->getLinkTarget($this,'checkConnection'));
 
 			
@@ -69,16 +69,18 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 	
 	public function checkConnection()
 	{
+		// @todo: Add @var $ilCtrl ilCtrl ..., remove unsused variable
 		global $ilCtrl, $lng, $tpl, $ilToolbar;
 		
 		$ilToolbar->addButton($lng->txt('settings'), $ilCtrl->getLinkTarget($this, 'editGoogleDocsSettings'));
-		
-		$api = ilGoogleDocsAPI::getInstance();
-		//$id = $api->createDocumentByType('test_doc_title', ilGoogleDocsConstants::GOOGLE_DOC);
-		
-		$id = $api->deleteDocumentByUrl("https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUyyDdCIYJwD2iVs-MWzHUHmMAHMzsLMpn2ivrXU");
 
-		
+		// @todo: Make the API use more robust (no PHP errors should appear)
+		$api = ilGoogleDocsAPI::getInstance();
+
+		// @todo: Remove this?
+		//$id = $api->createDocumentByType('test_doc_title', ilGoogleDocsConstants::GOOGLE_DOC);
+		// @todo: Hash key?
+		$id = $api->deleteDocumentByUrl("https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUyyDdCIYJwD2iVs-MWzHUHmMAHMzsLMpn2ivrXU");
 		if($id)
 		{
 			ilUtil::sendSuccess($this->pluginObj->txt('created_doc_successfully'));

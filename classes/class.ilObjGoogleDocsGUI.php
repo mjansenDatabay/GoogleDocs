@@ -8,7 +8,7 @@ require_once dirname(__FILE__).'/../interfaces/interface.ilGoogleDocsConstants.p
 
 /**
  * @ilCtrl_isCalledBy ilObjGoogleDocsGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
- * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI
+ * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI
  */
 class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants
 {
