@@ -51,5 +51,15 @@ $ilDB->addPrimaryKey('rep_robj_xgdo_data', array('obj_id'));
 				  'notnull' => true
 				  ));
 	}
-?>	
-	
+?>
+<#5>
+<?php
+	if(!$ilDB->tableColumnExists('rep_robj_xgdo_data','edit_doc_url'))
+	{
+		$ilDB->addTableColumn('rep_robj_xgdo_data','edit_doc_url',
+			array('type' => 'text',
+				  'length' => 1000,
+				  'notnull' => true
+			));
+	}
+?>

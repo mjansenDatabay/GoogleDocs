@@ -2,19 +2,29 @@
 
 class ilGoogleDocsAPI
 {
-	/** @var 
-	  */
+	/**
+	 * @var $instance 
+	 */
 	private static $instance;
 
 	private $login = null;
 	private $password = null;
 	
 	private $tbl_settings = 'rep_robj_xgdo_settings';
-	
+
+	/**
+	 * @var $client object Zend_Gdata_ClientLogin
+	 */
 	public $client = null;
+	/**
+	 * @var docs object Zend_Gdata_Docs
+	 */
 	public $docs = null;
 
-	
+
+	/**
+	 * @param $login string
+	 */
 	public function setLogin($login)
 	{
 		$this->login = $login;
@@ -25,6 +35,9 @@ class ilGoogleDocsAPI
 		return $this->login;
 	}
 
+	/**
+	 * @param $password string
+	 */
 	public function setPassword($password)
 	{
 		$this->password = $password;
@@ -44,8 +57,16 @@ class ilGoogleDocsAPI
 	{
 		if(!self::$instance instanceof self)
 		{
-			self::$instance = new self;
-			self::$instance->connect();
+			if(self::getSetting('login') == NULL && self::getSetting('password') == NULL)
+			{
+				global $lng;
+				return ilUtil::sendFailure($lng->txt('err_check_input'));
+			}
+			else
+			{
+				self::$instance = new self;
+				self::$instance->connect();
+			}
 		}
 		return self::$instance;
 	}
@@ -54,43 +75,24 @@ class ilGoogleDocsAPI
 	{ 
 		if(!$this->readSettings())
 		{
-			global $lng;
-			return ilUtil::sendFailure($lng->txt('settings_incomplete'));	
+			return false;
 		}
-
+		
 		try {
 			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
 			$docs = new Zend_Gdata_Docs($client);
 			$feed = $docs->getDocumentListFeed();
+			$this->client = $client;
+			$this->docs   = $docs;
+
 		} catch (Zend_Gdata_App_AuthException $ae)
 		{
-			exit("Error: ". $ae->getMessage() ."\nCredentials provided were email: [$this->getLogin()] and password [$this->getPassword()].\n");
+			global $lng;
+			return ilUtil::sendFailure($lng->txt('err_wrong_login'));
 		}
-/*
-		if(!isset($_SESSION['token']))
-		{
-			if(isset($_GET['token']))
-			{
-				$session_token         = Zend_Gdata_AuthSub::getAuthSubSessionToken($_GET['token']);
-				$_SESSION['token'] = $session_token;
-			}
-			else
-			{
-				$googleUri = Zend_Gdata_AuthSub::getAuthSubTokenUri(
-					'http://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'],
-					'https://docs.google.com/feeds/', 0, 1
-				);
-				header("Location: " . $googleUri);
-				exit();
-			}
-		}
-*/
-		$this->client = $client;
-		$this->docs   = new Zend_Gdata_Docs($client);
-	
+		
 		return true;
 	}
-
 
 	/**
 	 * @static
@@ -105,46 +107,13 @@ class ilGoogleDocsAPI
 			
 			$docs = new Zend_Gdata_Docs($client);
 			$feed = $docs->getDocumentListFeed();
+			
 		} catch (Zend_Gdata_App_AuthException $ae)
 		{
-			exit("Error: ". $ae->getMessage() ."\nCredentials provided were email: [$a_login] and password [******].\n");
+			global $lng;	
+			return ilUtil::sendFailure($lng->txt('err_wrong_login'));
 		}
-
-/*		if(!isset($_SESSION['token']))
-		{
-			if(isset($_GET['token']))
-			{
-				$session_token         = Zend_Gdata_AuthSub::getAuthSubSessionToken($_GET['token'], $client);
-
-				$_SESSION['token'] = $session_token;
-			}
-			else
-			{
-				$googleUri = Zend_Gdata_AuthSub::getAuthSubTokenUri(
-					'https://' . $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'],
-					'https://docs.google.com/feeds/', 0, 1
-				);
-				header("Location: " . $googleUri);
-				exit();
-			}
-		}
-	
-		$client = Zend_Gdata_AuthSub::getHttpClient($_SESSION['token']);
-		$docs   = new Zend_Gdata_Docs($client);
-		$feed = $docs->getDocumentListFeed();
-*/		
-		foreach($feed->entries as $document)
-		{
-			echo "<hr />";
-			echo '<a href="'.$document->getContent()->getSrc().'">'.$document->getTitle()->getText()."</a><br />";
-			foreach($document->getLink() as $link)
-			{
-				if($link->getRel() == 'alternate')
-				{
-					echo '<a href="'.$link->getHref().'">Am Dokument arbeiten</a><br />';
-				}
-			}
-		}
+		return true;
 	}
 
 	public function readSettings()
@@ -159,8 +128,8 @@ class ilGoogleDocsAPI
 			array('login', 'password'));
 
 		if($ilDB->numRows($res) < 2)
-		{
-			return false;
+		{ 
+			return 0;
 		}
 		else
 		{
@@ -174,21 +143,30 @@ class ilGoogleDocsAPI
 		}
 	}
 
-
-	public function setSetting($a_keyword, $a_value)
+	/**
+	 * @static
+	 * @param $a_keyword string 
+	 * @param $a_value string 
+	 */
+	public static function setSetting($a_keyword, $a_value)
 	{
 		global $ilDB;
 		
 		$ilDB->manipulateF('
-			DELETE FROM '. $this->tbl_settings.' WHERE keyword = %s',
+			DELETE FROM rep_robj_xgdo_settings WHERE keyword = %s',
 			array('text'), array($a_keyword));
 		
-		$ilDB->insert($this->tbl_settings, 
+		$ilDB->insert('rep_robj_xgdo_settings', 
 			array( 
 			'keyword' => array('text', $a_keyword),
 			'value' => array('text', $a_value)));
 	}
-	
+
+	/**
+	 * @static
+	 * @param $a_keyword
+	 * @return mixed
+	 */
 	public static function getSetting($a_keyword)
 	{
 		global $ilDB;
@@ -200,7 +178,6 @@ class ilGoogleDocsAPI
 		
 		return $row['value'];
 	}
-
 
 
 	/**
@@ -237,18 +214,53 @@ class ilGoogleDocsAPI
 // Add document to your list
 		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 
-// Display document ID
+// Return document ID
 		return ($doc->getId());
 	}
 	
-	public function deleteDocumentByUrl($a_doc_url)
+	public function copyDocument($a_doc_url, $a_type, $a_title)
 	{
-		//"https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUyyDdCIYJwD2iVs-MWzHUHmMAHMzsLMpn2ivrXU";
-		$file = $this->docs->getDocumentListEntry($a_doc_url);
-		$file->delete();
 
+// Create new document
+		$data = new Zend_Gdata_Docs_DocumentListEntry();
 
+		if($a_type == ilGoogleDocsConstants::GOOGLE_DOC)
+		{
+			$doctype = 'document';
+		}
+		else if($a_type == ilGoogleDocsConstants::GOOGLE_XLS)
+		{
+			$doctype = 'spreadsheet';
+		}
+		else if($a_type == ilGoogleDocsConstants::GOOGLE_PPT)
+		{
+			$doctype = 'presentation';
+		}
+
+		$data->setCategory(
+			array(new Zend_Gdata_App_Extension_Category(
+				"http://schemas.google.com/docs/2007#".$doctype,
+				"http://schemas.google.com/g/2005#kind"
+			)));
+
+		$data->setTitle(new Zend_Gdata_App_Extension_Title($a_title, null));
+// Use this doc_id as copy source	
+		$data->setId(new Zend_Gdata_App_Extension_Id($a_doc_url));
+
+// Add document to your list
+		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
+//
+// Return document ID
+		return ($doc->getId());		
+		
 	}
 
-
+	/**
+	 * @param $a_doc_url string i.e. "https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUy....."
+	 */
+	public function deleteDocumentByUrl($a_doc_url)
+	{
+		$file = $this->docs->getDocumentListEntry($a_doc_url);
+		$file->delete();
+	}
 }

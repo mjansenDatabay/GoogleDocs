@@ -8,6 +8,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 {
 	private $doc_type = 0;
 	private $doc_url = NULL;
+	private $edit_doc_url = NULL;
 	
 	/**
 	 * @param int $a_ref_id
@@ -35,6 +36,9 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		return $this->doc_type;
 	}
 
+	/**
+	 * @param string $a_doc_url
+	 */
 	public function setDocUrl($a_doc_url)
 	{
 		$this->doc_url = $a_doc_url;
@@ -43,6 +47,18 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function getDocUrl()
 	{
 		return $this->doc_url;
+	}
+
+	/**
+	 * @param $a_edit_doc_url string url for editing the doc
+	 */
+	public function setEditDocUrl($a_edit_doc_url)
+	{
+		$this->edit_doc_url = $a_edit_doc_url;
+	}
+	public function getEditDocUrl()
+	{
+		return $this->edit_doc_url;
 	}
 	
 	/**
@@ -73,12 +89,21 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		
 		$api = ilGoogleDocsAPI::getInstance();
 		$doc_id = $api->createDocumentByType($this->getTitle(),$this->getDocType());
-
+	
+		$document = $api->docs->getDocumentListEntry($doc_id->getText());
+		foreach($document->getLink() as $link)
+		{
+			if($link->getRel() == 'alternate')
+			{
+				$edit_doc_url = $link->getHref();
+			}
+		}	
 		
 		$ilDB->insert('rep_robj_xgdo_data',array(
 			'obj_id' => array('integer', $this->getId()),
 			'doc_type' => array('integer', $this->getDocType()),
-			'doc_url'  => array('text', $doc_id)
+			'doc_url'  => array('text', $doc_id),
+			'edit_doc_url' => array('text', $edit_doc_url)
 		));
 	}
 
@@ -97,6 +122,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		{
 			$this->setDocType($row['doc_type']);
 			$this->setDocUrl($row['doc_url']);
+			$this->setEditDocUrl($row['edit_doc_url']);
 		}
 	}
 
@@ -119,7 +145,6 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 		$api = ilGoogleDocsAPI::getInstance();
 		
-		//https://docs.google.com/feeds/documents/private/full/document%3A1nTlFkBDwkvUqm89JH8K_F_z9YQD2ITTTpPnq975GS3E
 		$doc_id = $api->deleteDocumentByUrl($this->getDocUrl());
 
 		$ilDB->manipulate('DELETE FROM rep_robj_xgdo_data WHERE obj_id = ' . $ilDB->quote($this->getId(), 'integer'));
@@ -132,5 +157,39 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 */
 	public function doCloneObject($new_obj, $a_target_id, $a_copy_id)
 	{
+		/**
+		 * @var $ilDB ilDB
+		 */
+		global $ilDB;
+		
+		$res = $ilDB->queryF('SELECT * FROM rep_robj_xgdo_data WHERE obj_id = %s',
+		array('integer'), array($this->getId()));
+		
+		while($row = $ilDB->fetchAssoc($res))
+		{
+			$source = $row;
+		}
+		
+		$api = ilGoogleDocsAPI::getInstance();
+		
+
+		$new_doc = $api->copyDocument($source['doc_url'], $source['doc_type'], $new_obj->getTitle());
+		$new_doc_id = $new_doc->getText();
+		$document = $api->docs->getDocumentListEntry($new_doc_id);	
+		foreach($document->getLink() as $link)
+		{
+			if($link->getRel() == 'alternate')
+			{
+				$new_edit_doc_url = $link->getHref();
+			}
+		}	
+		
+		$ilDB->insert('rep_robj_xgdo_data', array(
+			'obj_id' => array('integer', $new_obj->getId()),
+			'doc_type' => array('integer', $source['doc_type']),
+			'doc_url' => array('text', $new_doc_id),
+			'edit_doc_url' => array('text', $new_edit_doc_url)
+		));
+
 	}
 }

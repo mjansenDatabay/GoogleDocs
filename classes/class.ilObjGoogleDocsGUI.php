@@ -104,13 +104,15 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 *
+	 * @param string $a_new_type
+	 * @return ilPropertyFormGUI
 	 */
+
 	public function  initCreateForm($a_new_type)
 	{
 		$form = parent::initCreateForm($a_new_type);
 		 
-		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('document_type'), 'doc_type');
+		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('doctype'), 'doc_type');
 		$radio_doctype->setRequired(true);
 		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), ilGoogleDocsConstants::GOOGLE_DOC);
 		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), ilGoogleDocsConstants::GOOGLE_XLS);
@@ -133,18 +135,57 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		/**
 		 * @var $tpl ilTemplate
 		 * @var $ilTabs ilTabsGUI
+		 * @var $lng ilLanguage
 		 */
 		global $tpl, $ilTabs, $lng;
 
+		$this->plugin->includeClass('class.ilGoogleDocsAPI.php');
+		
+		$api = ilGoogleDocsAPI::getInstance();
+		
 		$ilTabs->activateTab("content");
 		
+		require_once 'Services/jQuery/classes/class.iljQueryUtil.php';
+		iljQueryUtil::initjQuery();
+		iljQueryUtil::initjQueryUI();
+		
+		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/css/jquery-ui-1.9.0.custom.css");
+		
 		$form =  new ilPropertyFormGUI();
-		$url = new ilNonEditableValueGUI($lng->txt('url'));
-		$url->setValue($this->object->getDocUrl());
+		
+		$url = new ilCustomInputGUI($lng->txt('url'), 'edit_url'); 
+		$href = '<a href="'.$this->object->getEditDocUrl().'" target="_blank" >'.$this->object->getEditDocUrl().'</a>';
+		$url->setHtml($href);
+
 		$form->addItem($url);
+
+		$html = $form->getHTML();
 		
+		$id = substr(md5($this->object->getEditDocUrl()), 0, 8);
 		
-		$tpl->setContent($form->getHTML());
+		$html .= '
+		<div id="resizable'.$id.'" style="height:600px;padding:20px">
+		<iframe id="iframe'.$id.'" src="'.$this->object->getEditDocUrl().'" 
+			style="border:none" name="'.md5($this->object->getTitle).'">
+			<p>Ihr Browser kann leider keine eingebetteten Frames anzeigen:
+				Sie k&ouml;nnen die eingebettete Seite &uuml;ber den folgenden Verweis
+			aufrufen: <a href=""'.$this->object->getEditDocUrl().'"" >""'.$this->object->getEditDocUrl().'</a></p>
+		</iframe></div>
+		<script type="text/javascript">
+		$(function() {
+			$( "#resizable'.$id.'" ).css({
+				"width": $("#resizable'.$id.'").width()
+			});
+			$( "#resizable'.$id.'" ).resizable();
+			$( "#iframe'.$id.'" ).css({
+				"width": "100%",
+				"height": "100%",
+			});
+		});
+		</script>
+		';
+		
+		$tpl->setContent($html);
 	}
 
 	/**
