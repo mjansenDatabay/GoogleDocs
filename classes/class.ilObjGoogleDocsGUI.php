@@ -149,7 +149,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		iljQueryUtil::initjQuery();
 		iljQueryUtil::initjQueryUI();
 		
-		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/css/jquery-ui-1.9.0.custom.css");
+		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/jquery-ui-1.9.0.custom.min.css");
+		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.css");
 		
 		$form =  new ilPropertyFormGUI();
 		
@@ -160,32 +161,13 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$form->addItem($url);
 
 		$html = $form->getHTML();
+
+		$tpl->addJavaScript("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.js");
+
+		$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
+		$content_tpl->setVariable("URL", $this->object->getEditDocUrl());
 		
-		$id = substr(md5($this->object->getEditDocUrl()), 0, 8);
-		
-		$html .= '
-		<div id="resizable'.$id.'" style="height:600px;padding:20px">
-		<iframe id="iframe'.$id.'" src="'.$this->object->getEditDocUrl().'" 
-			style="border:none" name="'.md5($this->object->getTitle).'">
-			<p>Ihr Browser kann leider keine eingebetteten Frames anzeigen:
-				Sie k&ouml;nnen die eingebettete Seite &uuml;ber den folgenden Verweis
-			aufrufen: <a href=""'.$this->object->getEditDocUrl().'"" >""'.$this->object->getEditDocUrl().'</a></p>
-		</iframe></div>
-		<script type="text/javascript">
-		$(function() {
-			$( "#resizable'.$id.'" ).css({
-				"width": $("#resizable'.$id.'").width()
-			});
-			$( "#resizable'.$id.'" ).resizable();
-			$( "#iframe'.$id.'" ).css({
-				"width": "100%",
-				"height": "100%",
-			});
-		});
-		</script>
-		';
-		
-		$tpl->setContent($html);
+		$tpl->setContent($html.$content_tpl->get());
 	}
 
 	/**
