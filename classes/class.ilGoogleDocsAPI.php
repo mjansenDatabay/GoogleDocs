@@ -7,20 +7,108 @@ class ilGoogleDocsAPI
 	 */
 	private static $instance;
 
+	/** @var $login Google-Login */
 	private $login = null;
+	
+	/** @var  $password Google-Password */
 	private $password = null;
 	
 	private $tbl_settings = 'rep_robj_xgdo_settings';
 
-	/**
-	 * @var $client object Zend_Gdata_ClientLogin
-	 */
+	/** @var $client object Zend_Gdata_ClientLogin */
 	public $client = null;
-	/**
-	 * @var docs object Zend_Gdata_Docs
-	 */
+	
+	/** @var docs object Zend_Gdata_Docs */
 	public $docs = null;
 
+	/** @var $is_proxy_enabled bool */
+	public $is_proxy_enabled = false;
+	
+	/** @var $proxy_host Proxy host*/
+	private $proxy_host = null;
+	
+	/** @var  $proxy_port Proxy port*/
+	private $proxy_port = null;
+
+	/**
+	 * @param object $client
+	 */
+	public function setClient($client)
+	{
+		$this->client = $client;
+	}
+
+	/**
+	 * @return object
+	 */
+	public function getClient()
+	{
+		return $this->client;
+	}
+
+	/**
+	 * @param \docs $docs
+	 */
+	public function setDocs($docs)
+	{
+		$this->docs = $docs;
+	}
+
+	/**
+	 * @return \docs
+	 */
+	public function getDocs()
+	{
+		return $this->docs;
+	}
+
+	/**
+	 * @param boolean $is_proxy_enabled
+	 */
+	public function setIsProxyEnabled($is_proxy_enabled)
+	{
+		$this->is_proxy_enabled = $is_proxy_enabled;
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function getIsProxyEnabled()
+	{
+		return $this->is_proxy_enabled;
+	}
+
+	/**
+	 * @param \Proxy $proxy_host
+	 */
+	public function setProxyHost($proxy_host)
+	{
+		$this->proxy_host = $proxy_host;
+	}
+
+	/**
+	 * @return \Proxy
+	 */
+	public function getProxyHost()
+	{
+		return $this->proxy_host;
+	}
+
+	/**
+	 * @param \Proxy $proxy_port
+	 */
+	public function setProxyPort($proxy_port)
+	{
+		$this->proxy_port = $proxy_port;
+	}
+
+	/**
+	 * @return \Proxy
+	 */
+	public function getProxyPort()
+	{
+		return $this->proxy_port;
+	}
 
 	/**
 	 * @param $login string
@@ -47,10 +135,17 @@ class ilGoogleDocsAPI
 	{
 		return $this->password;
 	}
-	
 
 	private function __construct()
 	{
+		require_once 'classes/class.ilProxySettings.php';
+
+		if(ilProxySettings::_getInstance()->isActive())
+		{
+			$this->setIsProxyEnabled(true);
+			$this->setProxyHost(ilProxySettings::_getInstance()->getHost());
+			$this->setProxyPort(ilProxySettings::_getInstance()->getPort());
+		}	
 	}
 	
 	public static function getInstance()
@@ -78,19 +173,51 @@ class ilGoogleDocsAPI
 			return false;
 		}
 		
-		try {
-			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-			$docs = new Zend_Gdata_Docs($client);
-			$feed = $docs->getDocumentListFeed();
-			$this->client = $client;
-			$this->docs   = $docs;
-
-		} catch (Zend_Gdata_App_AuthException $ae)
+		if($this->is_proxy_enabled == true)
 		{
-			global $lng;
-			return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+			// Configure the proxy connection  
+			$config = array(
+				'adapter'    => 'Zend_Http_Client_Adapter_Proxy',
+				'proxy_host' => $this->getProxyHost(),
+				'proxy_port' => $this->getProxyPort()
+			);
+
+			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
+
+			try 
+			{
+				$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME,
+						$proxiedHttpClient);
+
+				$docs = new Zend_Gdata_Docs($client);
+				$feed = $docs->getDocumentListFeed();
+
+				$this->setClient($client);
+				$this->setDocs($docs);
+
+			} 
+			catch (Zend_Gdata_App_HttpException $httpException) 
+			{
+				exit("An error occurred trying to connect to the proxy server\n" .
+					$httpException->getMessage() . "\n");
+			}
 		}
-		
+		else
+		{
+			try 
+			{
+				$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
+				$docs = new Zend_Gdata_Docs($client);
+				$feed = $docs->getDocumentListFeed();
+				$this->setClient($client);
+				$this->setDocs($docs);
+			} 
+			catch (Zend_Gdata_App_AuthException $ae)
+			{
+				global $lng;
+				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+			}
+		}
 		return true;
 	}
 
@@ -102,16 +229,45 @@ class ilGoogleDocsAPI
 	 */
 	public static function checkConnection($pluginObj, $a_login, $a_password)
 	{
-		try {
-			$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-			
-			$docs = new Zend_Gdata_Docs($client);
-			$feed = $docs->getDocumentListFeed();
-			
-		} catch (Zend_Gdata_App_AuthException $ae)
+		require_once 'classes/class.ilProxySettings.php';
+
+		if(ilProxySettings::_getInstance()->isActive())
 		{
-			global $lng;	
-			return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+			$config = array(
+				'adapter'    => 'Zend_Http_Client_Adapter_Proxy',
+				'proxy_host' => ilProxySettings::_getInstance()->getHost(),
+				'proxy_port' => ilProxySettings::_getInstance()->getPort()
+			);
+
+			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
+			try
+			{
+				$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME,
+					$proxiedHttpClient);
+
+				$docs = new Zend_Gdata_Docs($client);
+				$feed = $docs->getDocumentListFeed();
+			}
+			catch (Zend_Gdata_App_HttpException $httpException)
+			{
+				exit("An error occurred trying to connect to the proxy server\n" .
+					$httpException->getMessage() . "\n");
+			}
+		}
+		else
+		{	
+		
+			try {
+				$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME);
+				
+				$docs = new Zend_Gdata_Docs($client);
+				$feed = $docs->getDocumentListFeed();
+				
+			} catch (Zend_Gdata_App_AuthException $ae)
+			{
+				global $lng;	
+				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+			}
 		}
 		return true;
 	}
@@ -136,8 +292,8 @@ class ilGoogleDocsAPI
 			while($row = $ilDB->fetchAssoc($res))
 			{
 				$settings[$row['keyword']] = $row['value'];
-				$this->login = $settings['login'];
-				$this->password = $settings['password'];
+				$this->setLogin($settings['login']);
+				$this->setPassword($settings['password']);
 			}
 			return true;
 		}

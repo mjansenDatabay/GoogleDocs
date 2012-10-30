@@ -11,6 +11,10 @@ Zend_Loader::loadClass('Zend_Gdata_Docs');
 Zend_Loader::loadClass('Zend_Gdata_App_AuthException');
 Zend_Loader::loadClass('Zend_Gdata_AuthSub');
 
+Zend_Loader::loadClass('Zend_Http_Client_Exception');
+Zend_Loader::loadClass('Zend_Http_Client');
+Zend_Loader::loadClass('Zend_Http_Client_Adapter_Proxy');
+
 class ilGoogleDocsPlugin extends ilRepositoryObjectPlugin
 {
 	/**

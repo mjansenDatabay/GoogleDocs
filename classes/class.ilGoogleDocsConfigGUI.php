@@ -39,7 +39,7 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 		 * @var $ilCtrl    ilCtrl
 		 * @var $lng       ilLanguage
 		 * @var $tpl       ilTemplate
-		 * @var $ilToolbar ilToolbar
+		 * @var $ilToolbar ilToolbarGUI
 		 */
 		global $ilCtrl, $lng, $tpl, $ilToolbar;
 
