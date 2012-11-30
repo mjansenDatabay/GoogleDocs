@@ -138,7 +138,7 @@ class ilGoogleDocsAPI
 
 	private function __construct()
 	{
-		require_once 'classes/class.ilProxySettings.php';
+		require_once './Services/Http/classes/class.ilProxySettings.php';
 
 		if(ilProxySettings::_getInstance()->isActive())
 		{
@@ -229,7 +229,7 @@ class ilGoogleDocsAPI
 	 */
 	public static function checkConnection($pluginObj, $a_login, $a_password)
 	{
-		require_once 'classes/class.ilProxySettings.php';
+		require_once './Services/Http/classes/class.ilProxySettings.php';
 
 		if(ilProxySettings::_getInstance()->isActive())
 		{

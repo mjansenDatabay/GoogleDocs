@@ -4,6 +4,7 @@
 require_once 'Services/Repository/classes/class.ilObjectPlugin.php';
 require_once dirname(__FILE__).'/../interfaces/interface.ilGoogleDocsConstants.php';
 
+
 class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 {
 	private $doc_type = 0;
@@ -16,6 +17,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function __construct($a_ref_id = 0)
 	{
 		parent::__construct($a_ref_id);
+		$this->plugin->includeClass('class.ilGoogleDocsAPI.php');
 	}
 	
 	/**
