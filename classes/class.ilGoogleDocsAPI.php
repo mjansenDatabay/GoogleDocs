@@ -236,7 +236,9 @@ class ilGoogleDocsAPI
 	 * @param $a_password string Google Password
 	 */
 	public static function checkConnection($pluginObj, $a_login, $a_password)
-	{
+	{	
+		global $lng;
+		
 		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
 		{
 			require_once 'Services/Http/classes/class.ilProxySettings.php';
@@ -257,14 +259,23 @@ class ilGoogleDocsAPI
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
 			try
 			{
-				$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME,
+				try{
+					$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME,
 					$proxiedHttpClient);
-
+				}
+				catch (Zend_Gdata_App_AuthException $ae)
+				{
+					return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+				}
 				$docs = new Zend_Gdata_Docs($client);
 				$feed = $docs->getDocumentListFeed();
 			}
 			catch (Zend_Gdata_App_HttpException $httpException)
 			{
+
+				global $lng;
+				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
+				
 				exit("An error occurred trying to connect to the proxy server\n" .
 					$httpException->getMessage() . "\n");
 			}
@@ -280,7 +291,6 @@ class ilGoogleDocsAPI
 				
 			} catch (Zend_Gdata_App_AuthException $ae)
 			{
-				global $lng;	
 				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
 			}
 		}

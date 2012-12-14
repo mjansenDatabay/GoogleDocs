@@ -128,13 +128,11 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 			}
 			else
 			{
-				return $check;
+				ilUtil::sendFailure($lng->txt('err_check_input'));
 			}
-			return true;
+			$this->form->setValuesByPost();
 		}
 
-		ilUtil::sendFailure($lng->txt('err_check_input'));
-		$this->form->setValuesByPost();
 		return $tpl->setContent($this->form->getHTML());
 	}
 
