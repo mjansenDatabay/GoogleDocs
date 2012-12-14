@@ -138,8 +138,16 @@ class ilGoogleDocsAPI
 
 	private function __construct()
 	{
-		require_once './Services/Http/classes/class.ilProxySettings.php';
 
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
+		{
+			require_once 'Services/Http/classes/class.ilProxySettings.php';
+		}
+		else
+		{
+			require_once 'classes/class.ilProxySettings.php';
+		}
+		
 		if(ilProxySettings::_getInstance()->isActive())
 		{
 			$this->setIsProxyEnabled(true);
@@ -229,7 +237,14 @@ class ilGoogleDocsAPI
 	 */
 	public static function checkConnection($pluginObj, $a_login, $a_password)
 	{
-		require_once './Services/Http/classes/class.ilProxySettings.php';
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
+		{
+			require_once 'Services/Http/classes/class.ilProxySettings.php';
+		}
+		else
+		{
+			require_once 'classes/class.ilProxySettings.php';
+		}
 
 		if(ilProxySettings::_getInstance()->isActive())
 		{
