@@ -114,7 +114,6 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 			$doc_id = $api->createDocumentByType('test_doc_title', self::GOOGLE_DOC);
 			if($doc_id)
 			{
-				sleep(10);
 				$api->deleteDocumentByUrl((string)$doc_id);
 				ilUtil::sendSuccess($this->pluginObj->txt('created_doc_successfully'));
 			}
