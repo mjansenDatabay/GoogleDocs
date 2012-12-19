@@ -1,22 +1,30 @@
 <?php
+/* Copyright (c) 1998-2012 ILIAS open source, Extended GPL, see docs/LICENSE */
 
-include_once("./Services/Component/classes/class.ilPluginConfigGUI.php");
+require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
+require_once 'Services/Component/classes/class.ilPluginConfigGUI.php';
 require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants.php';
 
+/**
+ * 
+ */
 class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsConstants
 {
 	/**
-	 * @var $pluginObj ilPlugin
+	 * @var ilPlugin
 	 */
 	public $pluginObj = null;
+
 	/**
-	 * @var $form ilPropertyFormGUI
+	 * @var ilPropertyFormGUI
 	 */
 	public $form = null;
 
+	/**
+	 * @param string $cmd
+	 */
 	public function performCommand($cmd)
 	{
-
 		$this->pluginObj = ilPlugin::getPluginObject('Services', 'Repository', 'robj', 'GoogleDocs');
 		$this->pluginObj->includeClass('class.ilGoogleDocsAPI.php');
 
@@ -28,11 +36,17 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public function configure()
 	{
 		$this->editGoogleDocsSettings();
 	}
 
+	/**
+	 * 
+	 */
 	public function editGoogleDocsSettings()
 	{
 		/**
@@ -43,73 +57,89 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 		 */
 		global $ilCtrl, $lng, $tpl, $ilToolbar;
 
-		if(ilGoogleDocsAPI::getSetting('login') != NULL && ilGoogleDocsAPI::getSetting('password') != NULL)
+		if(ilGoogleDocsAPI::getSetting('login') != NULL &&
+		   ilGoogleDocsAPI::getSetting('password') != NULL)
 		{
 			$ilToolbar->addButton($this->pluginObj->txt('check_connection'), $ilCtrl->getLinkTarget($this, 'checkConnection'));
 		}
 
-		include_once './Services/Form/classes/class.ilPropertyFormGUI.php';
 		$this->form = new ilPropertyFormGUI();
 
 		$this->form->setFormAction($ilCtrl->getFormAction($this, 'saveGoogleDocsSettings'));
 		$this->form->setTitle($lng->txt('settings'));
 
 		$this->form->addCommandButton('saveGoogleDocsSettings', $lng->txt('save'));
-		$this->form->addCommandButton('cancelGoogleDocsSettings', $lng->txt('cancel'));
 
 		$form_login = new ilTextInputGUI($this->pluginObj->txt('google_login'), 'login');
 		$form_login->setRequired(true);
 		$form_login->setValue(ilGoogleDocsAPI::getSetting('login'));
-		$this->form->addItem($form_login);
 
 		$form_passwd = new ilPasswordInputGUI($lng->txt('password'), 'password');
 		$form_passwd->setRequired(true);
 		$form_passwd->getSkipSyntaxCheck(true);
 		$form_passwd->setValue(ilGoogleDocsAPI::getSetting('password'));
 		$form_passwd->setRetype(false);
+
+		$this->form->addItem($form_login);
 		$this->form->addItem($form_passwd);
 
 		$tpl->setContent($this->form->getHTML());
 	}
 
+	/**
+	 * 
+	 */
 	public function checkConnection()
 	{
 		/**
 		 * @var $ilCtrl    ilCtrl
 		 * @var $lng       ilLanguage
-		 * @var $ilToolbar ilToolbar
+		 * @var $ilToolbar ilToolbarGUI
 		 */
 		global $ilCtrl, $lng, $ilToolbar;
 
-		$ilToolbar->addButton($lng->txt('settings'), $ilCtrl->getLinkTarget($this, 'editGoogleDocsSettings'));
-
-		$api = ilGoogleDocsAPI::getInstance();
-
-		if(!is_object($api))
+		if(ilGoogleDocsAPI::getSetting('login') == NULL ||
+		   ilGoogleDocsAPI::getSetting('password') == NULL
+		)
 		{
-			ilUtil::sendFailure($lng->txt('err_check_input'));
-			return $this->editGoogleDocsSettings();
+			$this->editGoogleDocsSettings();
+			return;
 		}
 
-		$gd_obj = $api->createDocumentByType('test_doc_title', ilGoogleDocsConstants::GOOGLE_DOC);
+		$ilToolbar->addButton($lng->txt('back'), $ilCtrl->getLinkTarget($this, 'editGoogleDocsSettings'));
 
-		if($gd_obj)
+		try
 		{
-			ilUtil::sendSuccess($this->pluginObj->txt('created_doc_successfully'));
+			$api    = ilGoogleDocsAPI::getInstance();
+			$doc_id = $api->createDocumentByType('test_doc_title', self::GOOGLE_DOC);
+			if($doc_id)
+			{
+				sleep(10);
+				$api->deleteDocumentByUrl((string)$doc_id);
+				ilUtil::sendSuccess($this->pluginObj->txt('created_doc_successfully'));
+			}
+			else
+			{
+				ilUtil::sendFailure($this->pluginObj->txt('creating_doc_failed'));
+			}
 		}
-		else
+		catch(Exception $e)
 		{
-			ilUtil::sendFailure($this->pluginObj->txt('creating_doc_failed'));
+			ilUtil::sendFailure($e->getMessage());
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public function saveGoogleDocsSettings()
 	{
 		/**
-		 * @var $tpl ilTemplate
-		 * @var $lng ilLanguage
+		 * @var $tpl    ilTemplate
+		 * @var $lng    ilLanguage
+		 * @var $ilCtrl ilCtrl
 		 */
-		global $tpl, $lng;
+		global $tpl, $lng, $ilCtrl;
 
 		$this->editGoogleDocsSettings();
 
@@ -117,27 +147,29 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 		{
 			$login    = $this->form->getInput('login');
 			$password = $this->form->getInput('password');
-
-			$check = ilGoogleDocsAPI::checkConnection($this->pluginObj, $login, $password);
-
-			if($check == true)
+			
+			try
 			{
-				ilGoogleDocsAPI::setSetting('login', $login);
-				ilGoogleDocsAPI::setSetting('password', $password);
-				ilUtil::sendSuccess($lng->txt('saved_successfully'));
+				if(ilGoogleDocsAPI::checkConnection($this->pluginObj, $login, $password))
+				{
+					ilGoogleDocsAPI::setSetting('login', $login);
+					ilGoogleDocsAPI::setSetting('password', $password);
+					ilUtil::sendSuccess($lng->txt('saved_successfully'), true);
+					$ilCtrl->redirect($this, 'editGoogleDocsSettings');
+				}
+				else
+				{
+					ilUtil::sendFailure($lng->txt('err_check_input'));
+				}
 			}
-			else
+			catch(Exception $e)
 			{
-				ilUtil::sendFailure($lng->txt('err_check_input'));
+				ilUtil::sendFailure($e->getMessage());
 			}
+			
 			$this->form->setValuesByPost();
 		}
 
-		return $tpl->setContent($this->form->getHTML());
-	}
-
-	public function cancelGoogleDocsSettings()
-	{
-		$this->editGoogleDocsSettings();
+		$tpl->setContent($this->form->getHTML());
 	}
 }

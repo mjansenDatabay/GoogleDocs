@@ -3,6 +3,9 @@
 
 require_once 'Services/Repository/classes/class.ilObjectPluginAccess.php';
 
+/**
+ * 
+ */
 class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 {
 	/**

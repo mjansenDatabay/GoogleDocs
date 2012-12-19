@@ -31,3 +31,5 @@ doctype_xls#:#Tabelle
 doctype_ppt#:#Presentation
 doctype#:#Datei-Typ
 doctype_not_valid#:#Der Datei-Typ ist fehlerhaft. 
+err_cr_type_mismatch#:#Der gewählte Dokumenten-Typ wird aktuell nicht unterstützt.
+err_cr_incomplete#:#Es ist ein Fehler beim Anlegen des Dokuments aufgetreten.

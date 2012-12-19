@@ -1,37 +1,46 @@
 <?php
+/* Copyright (c) 1998-2012 ILIAS open source, Extended GPL, see docs/LICENSE */
 
-class ilGoogleDocsAPI
+require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants.php';
+
+/**
+ *
+ */
+class ilGoogleDocsAPI implements ilGoogleDocsConstants
 {
 	/**
-	 * @var $instance 
+	 * @var ilGoogleDocsAPI
 	 */
 	private static $instance;
 
-	/** @var $login Google-Login */
+	/** @var string Google-Login */
 	private $login = null;
-	
-	/** @var  $password Google-Password */
+
+	/** @var  string Google-Password */
 	private $password = null;
-	
+
+	/**
+	 * @var string
+	 */
 	private $tbl_settings = 'rep_robj_xgdo_settings';
 
-	/** @var $client object Zend_Gdata_ClientLogin */
+	/** @var Zend_Gdata_ClientLogin */
 	public $client = null;
-	
-	/** @var docs object Zend_Gdata_Docs */
+
+	/** @var Zend_Gdata_Docs */
 	public $docs = null;
 
-	/** @var $is_proxy_enabled bool */
+	/** @var bool */
 	public $is_proxy_enabled = false;
-	
-	/** @var $proxy_host Proxy host*/
+
+	/** @var string */
 	private $proxy_host = null;
-	
-	/** @var  $proxy_port Proxy port*/
+
+	/** @var  string */
 	private $proxy_port = null;
 
 	/**
-	 * @param object $client
+	 * @param Zend_Gdata_ClientLogin $client
 	 */
 	public function setClient($client)
 	{
@@ -39,7 +48,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @return object
+	 * @return Zend_Gdata_ClientLogin
 	 */
 	public function getClient()
 	{
@@ -47,7 +56,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @param \docs $docs
+	 * @param docs $docs
 	 */
 	public function setDocs($docs)
 	{
@@ -55,7 +64,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @return \docs
+	 * @return docs
 	 */
 	public function getDocs()
 	{
@@ -79,7 +88,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @param \Proxy $proxy_host
+	 * @param string $proxy_host
 	 */
 	public function setProxyHost($proxy_host)
 	{
@@ -87,7 +96,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @return \Proxy
+	 * @return string
 	 */
 	public function getProxyHost()
 	{
@@ -95,7 +104,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @param \Proxy $proxy_port
+	 * @param string $proxy_port
 	 */
 	public function setProxyPort($proxy_port)
 	{
@@ -103,7 +112,7 @@ class ilGoogleDocsAPI
 	}
 
 	/**
-	 * @return \Proxy
+	 * @return string
 	 */
 	public function getProxyPort()
 	{
@@ -147,43 +156,42 @@ class ilGoogleDocsAPI
 		{
 			require_once 'classes/class.ilProxySettings.php';
 		}
-		
+
 		if(ilProxySettings::_getInstance()->isActive())
 		{
 			$this->setIsProxyEnabled(true);
 			$this->setProxyHost(ilProxySettings::_getInstance()->getHost());
 			$this->setProxyPort(ilProxySettings::_getInstance()->getPort());
-		}	
+		}
 	}
-	
+
+	/**
+	 * @return ilGoogleDocsAPI
+	 * @throws Exception
+	 */
 	public static function getInstance()
 	{
 		if(!self::$instance instanceof self)
 		{
-			if(self::getSetting('login') == NULL && self::getSetting('password') == NULL)
-			{
-				global $lng;
-				return ilUtil::sendFailure($lng->txt('err_check_input'));
-			}
-			else
-			{
-				self::$instance = new self;
-				self::$instance->connect();
-			}
+			self::$instance = new self;
+			self::$instance->connect();
 		}
+
 		return self::$instance;
 	}
-	
+
+	/**
+	 * @throws Exception
+	 */
 	private function connect()
-	{ 
+	{
 		if(!$this->readSettings())
 		{
-			return false;
+			throw new ilException(self::ERROR_ACCOUNT_DATA);
 		}
-		
+
 		if($this->is_proxy_enabled == true)
 		{
-			// Configure the proxy connection  
 			$config = array(
 				'adapter'    => 'Zend_Http_Client_Adapter_Proxy',
 				'proxy_host' => $this->getProxyHost(),
@@ -191,54 +199,29 @@ class ilGoogleDocsAPI
 			);
 
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-
-			try 
-			{
-				$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME,
-						$proxiedHttpClient);
-
-				$docs = new Zend_Gdata_Docs($client);
-				$feed = $docs->getDocumentListFeed();
-
-				$this->setClient($client);
-				$this->setDocs($docs);
-
-			} 
-			catch (Zend_Gdata_App_HttpException $httpException) 
-			{
-				exit("An error occurred trying to connect to the proxy server\n" .
-					$httpException->getMessage() . "\n");
-			}
+			$client            = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME, $proxiedHttpClient);
+			$docs              = new Zend_Gdata_Docs($client);
+			$this->setClient($client);
+			$this->setDocs($docs);
 		}
 		else
 		{
-			try 
-			{
-				$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-				$docs = new Zend_Gdata_Docs($client);
-				$feed = $docs->getDocumentListFeed();
-				$this->setClient($client);
-				$this->setDocs($docs);
-			} 
-			catch (Zend_Gdata_App_AuthException $ae)
-			{
-				global $lng;
-				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
-			}
+			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
+			$docs   = new Zend_Gdata_Docs($client);
+			$this->setClient($client);
+			$this->setDocs($docs);
 		}
-		return true;
 	}
 
 	/**
-	 * @static
-	 * @param $pluginObj object GoogleDocsPlugin-Object
-	 * @param $a_login	 string  Google Login	
-	 * @param $a_password string Google Password
+	 * @param ilPlugin $pluginObj
+	 * @param string   $a_login
+	 * @param string   $a_password
+	 * @return bool
+	 * @throws Exception
 	 */
-	public static function checkConnection($pluginObj, $a_login, $a_password)
-	{	
-		global $lng;
-		
+	public static function checkConnection(ilPlugin $pluginObj, $a_login, $a_password)
+	{
 		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
 		{
 			require_once 'Services/Http/classes/class.ilProxySettings.php';
@@ -257,59 +240,39 @@ class ilGoogleDocsAPI
 			);
 
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-			try
-			{
-				try{
-					$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME,
-					$proxiedHttpClient);
-				}
-				catch (Zend_Gdata_App_AuthException $ae)
-				{
-					return ilUtil::sendFailure($lng->txt('err_wrong_login'));
-				}
-				$docs = new Zend_Gdata_Docs($client);
-				$feed = $docs->getDocumentListFeed();
-			}
-			catch (Zend_Gdata_App_HttpException $httpException)
-			{
-
-				global $lng;
-				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
-				
-				exit("An error occurred trying to connect to the proxy server\n" .
-					$httpException->getMessage() . "\n");
-			}
+			$client            = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME, $proxiedHttpClient);
+			$docs              = new Zend_Gdata_Docs($client);
+			$docs->getDocumentListFeed();
 		}
 		else
-		{	
-		
-			try {
-				$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-				
-				$docs = new Zend_Gdata_Docs($client);
-				$feed = $docs->getDocumentListFeed();
-				
-			} catch (Zend_Gdata_App_AuthException $ae)
-			{
-				return ilUtil::sendFailure($lng->txt('err_wrong_login'));
-			}
+		{
+			$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME);
+			$docs   = new Zend_Gdata_Docs($client);
+			$docs->getDocumentListFeed();
 		}
+
 		return true;
 	}
 
+	/**
+	 * @return bool|int
+	 */
 	public function readSettings()
 	{
+		/**
+		 * @var $ilDB ilDB
+		 */
 		global $ilDB;
 
 		$res = $ilDB->queryF('
-			SELECT * FROM '.$this->tbl_settings .' 
+			SELECT * FROM ' . $this->tbl_settings . ' 
 			WHERE keyword = %s
 			OR keyword = %s',
 			array('text', 'text'),
 			array('login', 'password'));
 
 		if($ilDB->numRows($res) < 2)
-		{ 
+		{
 			return 0;
 		}
 		else
@@ -320,75 +283,88 @@ class ilGoogleDocsAPI
 				$this->setLogin($settings['login']);
 				$this->setPassword($settings['password']);
 			}
+
 			return true;
 		}
 	}
 
 	/**
-	 * @static
-	 * @param $a_keyword string 
-	 * @param $a_value string 
+	 * @param $a_keyword string
+	 * @param $a_value   string
 	 */
 	public static function setSetting($a_keyword, $a_value)
 	{
+		/**
+		 * @var $ilDB ilDB
+		 */
 		global $ilDB;
-		
+
 		$ilDB->manipulateF('
 			DELETE FROM rep_robj_xgdo_settings WHERE keyword = %s',
 			array('text'), array($a_keyword));
-		
-		$ilDB->insert('rep_robj_xgdo_settings', 
-			array( 
-			'keyword' => array('text', $a_keyword),
-			'value' => array('text', $a_value)));
+
+		$ilDB->insert(
+			'rep_robj_xgdo_settings',
+			array(
+				'keyword' => array('text', $a_keyword),
+				'value'   => array('text', $a_value)
+			)
+		);
 	}
 
 	/**
-	 * @static
-	 * @param $a_keyword
-	 * @return mixed
+	 * @param string $a_keyword
+	 * @return string|null
 	 */
 	public static function getSetting($a_keyword)
 	{
+		/**
+		 * @var $ilDB ilDB
+		 */
 		global $ilDB;
-		
-		$res = $ilDB->queryF('SELECT value FROM rep_robj_xgdo_settings WHERE keyword = %s',
-		array('text'), array($a_keyword));
-		
+
+		$res = $ilDB->queryF(
+			'SELECT value FROM rep_robj_xgdo_settings WHERE keyword = %s',
+			array('text'),
+			array($a_keyword)
+		);
+
 		$row = $ilDB->fetchAssoc($res);
-		
+
 		return $row['value'];
 	}
 
 
 	/**
-	 * @param $a_title  string Name of the new file
-	 * @param $a_type	integer Type of the file
+	 * @param string $a_title   string Name of the new file
+	 * @param string $a_type    integer Type of the file
 	 * @return mixed
 	 */
 	public function createDocumentByType($a_title, $a_type)
 	{
-// Create new document
 		$data = new Zend_Gdata_Docs_DocumentListEntry();
 
-		if($a_type == ilGoogleDocsConstants::GOOGLE_DOC)
+		if($a_type == self::GOOGLE_DOC)
 		{
 			$doctype = 'document';
 		}
-		else if($a_type == ilGoogleDocsConstants::GOOGLE_XLS)
+		else if($a_type == self::GOOGLE_XLS)
 		{
 			$doctype = 'spreadsheet';
 		}
-		else if($a_type == ilGoogleDocsConstants::GOOGLE_PPT)
+		else if($a_type == self::GOOGLE_PPT)
 		{
 			$doctype = 'presentation';
 		}
 
 		$data->setCategory(
-			array(new Zend_Gdata_App_Extension_Category(
-				"http://schemas.google.com/docs/2007#".$doctype,
-				"http://schemas.google.com/g/2005#kind"
-			)));
+			array(
+				new Zend_Gdata_App_Extension_Category(
+					"http://schemas.google.com/docs/2007#" . $doctype,
+					"http://schemas.google.com/g/2005#kind"
+				)
+			)
+		);
 
 		$data->setTitle(new Zend_Gdata_App_Extension_Title($a_title, null));
 
@@ -396,33 +372,40 @@ class ilGoogleDocsAPI
 		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 
 // Return document ID
-		return ($doc->getId());
+		return $doc->getId();
 	}
-	
+
+	/**
+	 * @param string $a_doc_url
+	 * @param int $a_type
+	 * @param string $a_title
+	 * @return mixed
+	 */
 	public function copyDocument($a_doc_url, $a_type, $a_title)
 	{
-
 // Create new document
 		$data = new Zend_Gdata_Docs_DocumentListEntry();
 
-		if($a_type == ilGoogleDocsConstants::GOOGLE_DOC)
+		if($a_type == self::GOOGLE_DOC)
 		{
 			$doctype = 'document';
 		}
-		else if($a_type == ilGoogleDocsConstants::GOOGLE_XLS)
+		else if($a_type == self::GOOGLE_XLS)
 		{
 			$doctype = 'spreadsheet';
 		}
-		else if($a_type == ilGoogleDocsConstants::GOOGLE_PPT)
+		else if($a_type == self::GOOGLE_PPT)
 		{
 			$doctype = 'presentation';
 		}
 
 		$data->setCategory(
-			array(new Zend_Gdata_App_Extension_Category(
-				"http://schemas.google.com/docs/2007#".$doctype,
-				"http://schemas.google.com/g/2005#kind"
-			)));
+			array(
+				new Zend_Gdata_App_Extension_Category(
+					"http://schemas.google.com/docs/2007#" . $doctype,
+					"http://schemas.google.com/g/2005#kind"
+				)
+			));
 
 		$data->setTitle(new Zend_Gdata_App_Extension_Title($a_title, null));
 // Use this doc_id as copy source	
@@ -432,8 +415,8 @@ class ilGoogleDocsAPI
 		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 //
 // Return document ID
-		return ($doc->getId());		
-		
+		return $doc->getId();
+
 	}
 
 	/**

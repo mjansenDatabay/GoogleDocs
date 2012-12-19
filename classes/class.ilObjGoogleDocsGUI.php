@@ -3,7 +3,6 @@
 
 require_once 'Services/Repository/classes/class.ilObjectPluginGUI.php';
 require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
-
 require_once dirname(__FILE__).'/../interfaces/interface.ilGoogleDocsConstants.php';
 
 /**
@@ -46,8 +45,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	 */
 	public function performCommand($cmd)
 	{
-		$next_class = $this->ctrl->getNextClass($this);
-		switch ($cmd)
+		switch($cmd)
 		{
 			case 'updateProperties':
 			case 'editProperties':
@@ -90,38 +88,36 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 * @param string $a_new_type
+	 * @param string $type
 	 * @return array
 	 */
-	protected function initCreationForms($a_new_type)
+	protected function initCreationForms($type)
 	{
-		$forms = array(
-			self::CFORM_NEW   => $this->initCreateForm($a_new_type),
-			self::CFORM_CLONE => $this->fillCloneTemplate(null, $a_new_type)
+		return array(
+			self::CFORM_NEW => $this->initCreateForm($type)
 		);
-
-		return $forms;
 	}
 
 	/**
-	 * @param string $a_new_type
+	 * @param string $type
 	 * @return ilPropertyFormGUI
 	 */
-
-	public function  initCreateForm($a_new_type)
+	public function  initCreateForm($type)
 	{
-		$form = parent::initCreateForm($a_new_type);
-		 
+		$form = parent::initCreateForm($type);
+
 		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('doctype'), 'doc_type');
 		$radio_doctype->setRequired(true);
-		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), ilGoogleDocsConstants::GOOGLE_DOC);
-		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), ilGoogleDocsConstants::GOOGLE_XLS);
-		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), ilGoogleDocsConstants::GOOGLE_PPT);
+		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), self::GOOGLE_DOC);
+		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), self::GOOGLE_XLS);
+		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), self::GOOGLE_PPT);
 
 		$radio_doctype->addOption($option_1);
 		$radio_doctype->addOption($option_2);
 		$radio_doctype->addOption($option_3);
-	
+		
+		$radio_doctype->setValue(self::GOOGLE_DOC);
+
 		$form->addItem($radio_doctype);
 
 		return $form;
@@ -141,9 +137,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		$this->plugin->includeClass('class.ilGoogleDocsAPI.php');
 		
-		$api = ilGoogleDocsAPI::getInstance();
-		
-		$ilTabs->activateTab("content");
+		$ilTabs->activateTab('content');
 		
 		require_once 'Services/jQuery/classes/class.iljQueryUtil.php';
 		iljQueryUtil::initjQuery();
@@ -165,7 +159,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$tpl->addJavaScript("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.js");
 
 		$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
-		$content_tpl->setVariable("URL", $this->object->getEditDocUrl());
+		$content_tpl->setVariable('URL', $this->object->getEditDocUrl());
 		
 		$tpl->setContent($html.$content_tpl->get());
 	}
@@ -224,20 +218,23 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$values['title'] = $this->object->getTitle();
 		$values['desc']  = $this->object->getDescription();
 
-		if($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_DOC)
+		if($this->object->getDocType() == self::GOOGLE_DOC)
+		{
 			$doc_type = $this->plugin->txt('doctype_doc');
-
-		elseif($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_XLS)
+		}
+		else if($this->object->getDocType() == self::GOOGLE_XLS)
+		{
 			$doc_type = $this->plugin->txt('doctype_xls');
-
-		elseif($this->object->getDocType() == ilGoogleDocsConstants::GOOGLE_PPT)
+		}
+		else if($this->object->getDocType() == self::GOOGLE_PPT)
+		{
 			$doc_type = $this->plugin->txt('doctype_ppt');
-	
+		}
 		else
 		{
-			$doc_type= $this->plugin->txt('doctype_not_valid');
+			$doc_type = $this->plugin->txt('doctype_not_valid');
 		}
-		
+
 		$values['doc_type'] = $doc_type;
 
 		$this->form->setValuesByArray($values);
@@ -266,7 +263,37 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 
 		$this->form->setValuesByPost();
-
 		$tpl->setContent($this->form->getHtml());
+	}
+
+	/**
+	 * Overwriting this method is necessary to handle creation problems with the api
+	 */
+	public function save()
+	{
+		$this->saveObject();
+	}
+
+	/**
+	 * Overwriting this method is necessary to handle creation problems with the api
+	 */
+	public function saveObject()
+	{
+		/**
+		 * @var $ilCtrl ilCtrl
+		 */
+		global $ilCtrl;
+
+		try
+		{
+			parent::saveObject();
+		}
+		catch(Exception $e)
+		{
+			ilUtil::sendFailure($this->plugin->txt($e->getMessage()), true);
+
+			$ilCtrl->setParameterByClass('ilrepositorygui', 'ref_id', (int)$_GET['ref_id']);
+			$ilCtrl->redirectByClass('ilrepositorygui');
+		}
 	}
 }
