@@ -153,11 +153,11 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 			if($doc_id)
 			{
 				$api->deleteDocumentByUrl((string)$doc_id);
-				ilUtil::sendSuccess($this->pluginObj->txt('created_doc_successfully'));
+				ilUtil::sendSuccess($this->pluginObj->txt('connection_check_successful'));
 			}
 			else
 			{
-				ilUtil::sendFailure($this->pluginObj->txt('creating_doc_failed'));
+				ilUtil::sendFailure($this->pluginObj->txt('connection_check_failed'));
 			}
 		}
 		catch(Exception $e)

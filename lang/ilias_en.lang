@@ -24,8 +24,8 @@ save#:#Save
 cancel#:#Cancel
 edit#:#Edit
 google_login#:#Google-Login
-created_doc_successfully#:#The creation of the document was successful. 
-creating_doc_failed#:#The creation of a document failed.
+connection_check_successful#:#Connection established successfully.
+connection_check_failed#:#Connection failed: Please checker whether you entered a valid google account and the corresponding password.
 check_connection#:#Check Connection
 doctype_doc#:#Document
 doctype_xls#:#Spreadsheet

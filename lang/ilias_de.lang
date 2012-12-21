@@ -24,9 +24,9 @@ save#:#Speichern
 cancel#:#Abbrechen
 edit#:#Bearbeiten
 google_login#:#Google-Login
-created_doc_successfully#:#Das Erstellen des Dokuments war erfolgreich.
-creating_doc_failed#:#Das Erstellen des Dokuments schlug fehl.
-check_connection#:#Überprüfung der Verbindung
+connection_check_successful#:#Die Verbindung konnte erfolgreich hergestellt werden.
+connection_check_failed#:#Verbindung fehlgeschlagen: Bitte überprüfen Sie, ob Sie einen gültigen Google-Account und das entsprechende Passwort eingetragen haben.
+check_connection#:#Verbindung überprüfen
 doctype_doc#:#Dokument
 doctype_xls#:#Tabelle
 doctype_ppt#:#Presentation
