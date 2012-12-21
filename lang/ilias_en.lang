@@ -5,10 +5,11 @@ obj_xgdo_duplicate#:#Copy
 objs_xgdo_duplicate#:#Copy Google Docs Document
 xgdo_add#:#Add Google Docs Document
 xgdo_new#:#Add new Google Docs Document
-xgdo_read#:#Read access to Google Docs Documents
-xgdo_write#:#Edit Google Docs Document
-xgdo_delete#:#Delete Google Docs Document
-xgdo_edit_permission#:#Change Permissions
+xgdo_read#:#User can read google docs document
+xgdo_write#:#User can edit google docs document
+xgdo_delete#:#User can move or delete google docs document
+xgdo_edit_permission#:#User can change permission settings
+xgdo_visible#:#Google docs document is visible
 crs_create_xgdo#:#Create Google Docs Document
 grp_create_xgdo#:#Create Google Docs Document
 fold_create_xgdo#:#Create Google Docs Document
@@ -23,14 +24,14 @@ save#:#Save
 cancel#:#Cancel
 edit#:#Edit
 google_login#:#Google-Login
-created_doc_successfully#:#The creation of a document was successfully. 
+created_doc_successfully#:#The creation of the document was successful. 
 creating_doc_failed#:#The creation of a document failed.
 check_connection#:#Check Connection
 doctype_doc#:#Document
 doctype_xls#:#Spreadsheet
 doctype_ppt#:#Presentation
-doctype#:#File-Type
-doctype_not_valid#:#The file-type is not valid.
+doctype#:#Document Type
+doctype_not_valid#:#The chosen document type is currently not supported.
 err_cr_type_mismatch#:#The chosen document type is currently not supported.
 err_cr_incomplete#:#An error occured during the creation process.
 reader_short_add#:#Reader
@@ -50,3 +51,6 @@ remove_participants_info_p#:#Möchten Sie die gewählten Teilnehmer wirklich ent
 send_mail#:#Mitlied eine E-Mail senden
 assigned_users_s#:#Der Benutzer wurde erfolgreich hinzugefügt.
 assigned_users_p#:#Die Benutzer wurden erfolgreich hinzugefügt.
+il_xgdo_writer#:#Writer
+il_xgdo_reader#:#Reader
+il_xgdo#:#Google Docs
