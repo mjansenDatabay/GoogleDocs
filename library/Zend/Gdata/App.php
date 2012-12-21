@@ -610,15 +610,12 @@ class Zend_Gdata_App
                     (($minor === null) ? '.' + $minor : '');
         }
 
-		// Patch for final deletion
+		// databay-patch: begin
 		if('DELETE' == $method)
 		{
 			$url .= '?delete=true';
 		}
-		
-if($GLOBALS["debug"]){echo  "---------------------------<br>";var_dump($method, $url, $headers, $body, $contentType);}
-		
-		
+		// databay-patch: end
 		
         // check the overridden method
         if (($method == 'POST' || $method == 'PUT') && $body === null &&

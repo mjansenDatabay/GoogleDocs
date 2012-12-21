@@ -310,6 +310,17 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 					'edit_doc_url' => array('text', $edit_doc_url)
 				)
 			);
+
+			$role = new Zend_Gdata_Acl_Role();
+			$role->setValue('writer');
+			$scope = new Zend_Gdata_Acl_Scope();
+			// @todo: Add google account for owner
+			$scope->setValue('mjansen@databay.de');
+			$scope->setType('user');
+			$acl_entry = new Zend_Gdata_Docs_AclEntry();
+			$acl_entry->setAclRole($role);
+			$acl_entry->setAclScope($scope);
+			$api->getDocs()->insertAcl($acl_entry, $document);
 		}
 		catch(Exception $e)
 		{

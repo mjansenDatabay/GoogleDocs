@@ -79,9 +79,9 @@ $query = 'SELECT ops_id FROM rbac_operations WHERE ' . $ilDB->in(
 );
 $res   = $ilDB->query($query);
 $ops   = array();
-while($row = $res->fetchRow(DB_FETCHMODE_OBJECT))
+while($row = $ilDB->fetchAssoc($res))
 {
-	$ops[$row->ops_id] = $operation;
+	$ops[$row['ops_id']] = true;
 }
 
 include_once 'Services/AccessControl/classes/class.ilObjRoleTemplate.php';
@@ -115,9 +115,9 @@ $query = 'SELECT ops_id FROM rbac_operations WHERE ' . $ilDB->in(
 );
 $res   = $ilDB->query($query);
 $ops   = array();
-while($row = $res->fetchRow(DB_FETCHMODE_OBJECT))
+while($row = $ilDB->fetchAssoc($res))
 {
-	$ops[$row->ops_id] = $operation;
+	$ops[$row['ops_id']] = true;
 }
 
 include_once 'Services/AccessControl/classes/class.ilObjRoleTemplate.php';

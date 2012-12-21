@@ -23,7 +23,8 @@ description#:#Beschreibung
 save#:#Speichern
 cancel#:#Abbrechen
 edit#:#Bearbeiten
-google_login#:#Google-Login
+google_master_login#:#Google-Login
+google_master_login_info#:#<span style="font-weight:bold;color:red">Wenn ein gültiger Google-Account konfiguriert wurde, sollten Sie diesen nicht mehr ändern. Andernfalls kann ILIAS die bis dahin erstellten Dokumente nicht mehr verwalten.</span>
 connection_check_successful#:#Die Verbindung konnte erfolgreich hergestellt werden.
 connection_check_failed#:#Verbindung fehlgeschlagen: Bitte überprüfen Sie, ob Sie einen gültigen Google-Account und das entsprechende Passwort eingetragen haben.
 check_connection#:#Verbindung überprüfen

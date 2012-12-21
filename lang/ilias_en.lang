@@ -23,7 +23,8 @@ description#:#Description
 save#:#Save
 cancel#:#Cancel
 edit#:#Edit
-google_login#:#Google-Login
+google_master_login#:#Google Login
+google_master_login_info#:#<span style="font-weight:bold;color:red">If configured once, please do not change the Google account anymore. Otherwise, ILIAS can no longer manange the previously created documents.</span> 
 connection_check_successful#:#Connection established successfully.
 connection_check_failed#:#Connection failed: Please checker whether you entered a valid google account and the corresponding password.
 check_connection#:#Check Connection

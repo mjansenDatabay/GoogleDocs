@@ -70,8 +70,9 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 
 		$this->form->addCommandButton('saveGoogleDocsSettings', $lng->txt('save'));
 
-		$form_login = new ilTextInputGUI($this->pluginObj->txt('google_login'), 'login');
+		$form_login = new ilTextInputGUI($this->pluginObj->txt('google_master_login'), 'login');
 		$form_login->setRequired(true);
+		$form_login->setInfo($this->pluginObj->txt('google_master_login_info'));
 		$form_login->setValue(ilGoogleDocsAPI::getSetting('login'));
 
 		$form_passwd = new ilPasswordInputGUI($lng->txt('password'), 'password');
@@ -112,44 +113,6 @@ class ilGoogleDocsConfigGUI extends ilPluginConfigGUI implements ilGoogleDocsCon
 		{
 			$api    = ilGoogleDocsAPI::getInstance();
 			$doc_id = $api->createDocumentByType('test_doc_title', self::GOOGLE_DOC);
-			//$document = $api->getDocs()->getDocumentListEntry($doc_id->getText());
-
-			// ACL-Liste
-			//$response = $api->docs->get($document->getId().'/acl');
-			//echo(htmlspecialchars($response->getBody()));
-
-			//$GLOBALS["debug"] = TRUE;
-			
-			/*$role = new Zend_Gdata_Acl_Role();
-			$role->setValue('writer');
-			
-			$scope = new Zend_Gdata_Acl_Scope();
-			$scope->setValue('bheyser@databay.de');
-			$scope->setType('user');
-			
-			$acl_entry = new Zend_Gdata_Docs_AclEntry();
-			$acl_entry->setAclRole($role);
-			$acl_entry->setService($scope);
-			
-			$api->getDocs()->insertAcl($acl_entry, $document);
-			//var_dump($api->getDocs()->getAclFeed($document));*/
-			
-			/*var_dump($api->docs->post('
-			<entry xmlns="http://www.w3.org/2005/Atom" xmlns:gAcl="http://schemas.google.com/acl/2007">
-  				<category scheme="http://schemas.google.com/g/2005#kind" term="http://schemas.google.com/acl/2007#accessRule"/>
-  				<gAcl:role value="owner"/>
-  				<gAcl:scope type="user" value="brainstorm0815@yahoo.de"/>
-			</entry>', str_replace(array('documents'),array('acl'), $document->getId())));*/
-
-			//https://developers.google.com/google-apps/documents-list/
-			
-			//https://docs.google.com/feeds/acl/private/full/document%3A1kiJmb2nqVWA7MefiEoCZ0wNwPzL1JFILX2-SadBIEvQ/acl*/
-			//https://docs.google.com/feeds/acl/private/full/document%3A1fEgXr-mt8hlWyYU2CHh0zUgiM5payBhuKvtxuChi7n8
-
-			//var_dump($api->getDocs()->getAclFeed($document));
-			
-			//exit();
-			//$GLOBALS["debug"] = false;
 			if($doc_id)
 			{
 				$api->deleteDocumentByUrl((string)$doc_id);

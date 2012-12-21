@@ -257,6 +257,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.css");
 
 		// @todo: Check whether the user is assigned to either a local reader or a local writer role. If we did no store the users' google account, yet, we have to force him to enter the account name
+		// ACL-Liste
+		//$response = $api->docs->get($document->getId().'/acl');
+		//echo(htmlspecialchars($response->getBody()));
 
 		$form = new ilPropertyFormGUI();
 
