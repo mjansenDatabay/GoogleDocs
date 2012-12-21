@@ -130,7 +130,6 @@ class ilGoogleDocsParticipantsTableGUI extends ilTable2GUI implements ilGoogleDo
 	public function parse(array $part)
 	{
 		require_once 'Services/User/classes/class.ilUserQuery.php';
-
 		$usr_data = ilUserQuery::getUserListData(
 			'login',
 			'ASC',

@@ -5,13 +5,20 @@ require_once 'Services/Repository/classes/class.ilObjectPluginGUI.php';
 require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
 require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants.php';
 require_once dirname(__FILE__) . '/../classes/class.ilGoogleDocsParticipantsTableGUI.php';
+require_once 'Services/PersonalDesktop/interfaces/interface.ilDesktopItemHandling.php';
 
 /**
  * @ilCtrl_isCalledBy ilObjGoogleDocsGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
  * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI
  */
-class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants
+class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants, ilDesktopItemHandling
 {
+	/**
+	 * @var ilObjGoogleDocs
+	 */
+	public $object = null;
+	
+	
 	/**
 	 * @var ilPropertyFormGUI
 	 */
@@ -55,17 +62,27 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		switch($next_class)
 		{
 			case 'ilpublicuserprofilegui':
-				$ilTabs->activateTab('participants');
+				$ilTabs->activateTab('members');
+
+				$this->setSubTabs('members');
 
 				require_once 'Services/User/classes/class.ilPublicUserProfileGUI.php';
 				$profile_gui = new ilPublicUserProfileGUI($_GET["user"]);
-				$profile_gui->setBackUrl($this->ctrl->getLinkTarget($this, "showMembersGallery"));
+				$profile_gui->setBackUrl($this->ctrl->getLinkTarget($this, 'showParticipantsGallery'));
 				$this->tpl->setContent($this->ctrl->forwardCommand($profile_gui));
+				break;
+
+			case 'ilcommonactiondispatchergui':
+				require_once 'Services/Object/classes/class.ilCommonActionDispatcherGUI.php';
+				$gui = ilCommonActionDispatcherGUI::getInstanceFromAjaxCall();
+				$this->ctrl->forwardCommand($gui);
 				break;
 
 			case 'ilrepositorysearchgui':
 				$this->checkPermission('write');
-				$ilTabs->activateTab('participants');
+				$ilTabs->activateTab('members');
+
+				$this->setSubTabs('members');
 
 				require_once 'Services/Search/classes/class.ilRepositorySearchGUI.php';
 				$rep_search = new ilRepositorySearchGUI();
@@ -94,6 +111,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->$cmd();
 						break;
 
+					case 'showParticipantsGallery':
 					case 'showContent':
 						$this->checkPermission('read');
 						$this->$cmd();
@@ -101,6 +119,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				}
 				break;
 		}
+
+		$this->addHeaderAction();
 	}
 
 	/**
@@ -129,14 +149,41 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
-			$ilTabs->addTab('participants', $this->txt('participants'), $this->ctrl->getLinkTarget($this, 'editParticipants'));
+			$ilTabs->addTab('members', $this->txt('members'), $this->ctrl->getLinkTarget($this, 'editParticipants'));
 		}
 		else if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
 		{
-			$ilTabs->addTab('participants', $this->txt('participants'), $this->ctrl->getLinkTarget($this, 'showMembersGallery'));
+			$ilTabs->addTab('members', $this->txt('members'), $this->ctrl->getLinkTarget($this, 'showParticipantsGallery'));
 		}
 
 		$this->addPermissionTab();
+	}
+
+	/**
+	 * @param string $a_tab
+	 */
+	protected function setSubTabs($a_tab)
+	{
+		/**
+		 * @var $ilTabs   ilTabsGUI
+		 * @var $ilCtrl   ilCtrl
+		 * @var $ilAccess ilAccessHandler
+		 */
+		global $ilTabs, $ilCtrl, $ilAccess;
+
+		switch($a_tab)
+		{
+			case 'members':
+				if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
+				{
+					$ilTabs->addSubTabTarget($this->plugin->txt('participant_administration'), $ilCtrl->getLinkTarget($this, 'editParticipants'), array('showSearch', 'handleMultiCommand', 'storedUserList', 'listUsers', 'showSearchResults', 'performSearch', 'start', 'editParticipants', 'sendMailToSelectedUsers', 'deleteParticipants', 'confirmDeleteParticipants', 'addParticipants'), '', '', false, true);
+				}
+				if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
+				{
+					$ilTabs->addSubTabTarget($this->plugin->txt('participant_gallery'), $ilCtrl->getLinkTarget($this, 'showParticipantsGallery'), array('showParticipantsGallery'), '', '', false, true);
+				}
+				break;
+		}
 	}
 
 	/**
@@ -202,6 +249,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/jquery-ui-1.9.0.custom.min.css");
 		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.css");
+
+		// @todo: Check whether the user is assigned to either a local reader or a local writer role. If we did no store the users' google account, yet, we have to force him to enter the account name
 
 		$form = new ilPropertyFormGUI();
 
@@ -336,7 +385,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		 */
 		global $ilTabs, $tpl, $rbacreview, $ilUser;
 
-		$ilTabs->activateTab('participants');
+		$ilTabs->activateTab('members');
+		
+		$this->setSubTabs('members');
 
 		/**
 		 * @var $participants_tpl ilTemplate
@@ -493,8 +544,15 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	 */
 	public function addParticipants(array $a_user_ids, $a_type)
 	{
+		if(!$a_user_ids)
+		{
+			ilUtil::sendFailure($this->lng->txt('select_one'));
+			return;
+		}
+		
 		try
 		{
+			// @todo: Check already assigned members, if no user has to be assigned, send a failure message
 			$this->object->addParticipants($a_user_ids, $a_type);
 		}
 		catch(Exception $e)
@@ -528,6 +586,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		{
 			$rbacadmin->deassignUser($this->object->getDefaultReaderRole(), $usr_id);
 			$rbacadmin->deassignUser($this->object->getDefaultWriterRole(), $usr_id);
+			// @todo: Revoke permission via api
 		}
 
 		ilUtil::sendSuccess($this->plugin->txt('participants_removed'.(count($_POST['participants']) == 1 ? '_s' : '_p')));
@@ -630,6 +689,94 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
+	 * 
+	 */
+	protected function showParticipantsGallery()
+	{
+		/**
+		 * @var $ilTabs     ilTabsGUI
+		 * @var $tpl        ilTemplate
+		 * @var $rbacreview ilRbacReview
+		 * @var $ilUser     ilObjUser
+		 */
+		global $ilTabs, $tpl, $rbacreview, $ilUser;
+
+		$ilTabs->activateTab('members');
+		
+		$this->setSubTabs('members');
+
+		/**
+		 * @var $participants_tpl ilTemplate
+		 */
+		$participants_tpl = $this->plugin->getTemplate('tpl.members_gallery.html');
+
+		require_once 'Services/User/classes/class.ilUserQuery.php';
+		$usr_data = ilUserQuery::getUserListData(
+			'login',
+			'ASC',
+			0,
+			9999,
+			'',
+			'',
+			null,
+			false,
+			false,
+			0,
+			0,
+			null,
+			array(),
+			array_unique(array_merge($rbacreview->assignedUsers($this->object->getDefaultReaderRole()), $rbacreview->assignedUsers($this->object->getDefaultWriterRole())))
+		);
+		
+		if(count($usr_data['set']))
+		{
+			foreach($usr_data['set'] as $member)
+			{
+				/**
+				 * @var $user ilObjUser
+				 */
+				if(!($user = ilObjectFactory::getInstanceByObjId($member['usr_id'], false)))
+				{
+					continue;
+				}
+
+				if(!$user->getActive())
+				{
+					continue;
+				}
+				
+				
+				$pp = $user->getPref('public_profile') == 'g' || ($user->getPref('public_profile') == 'y' && $ilUser->getId() != ANONYMOUS_USER_ID);
+				$this->ctrl->setParameterByClass('ilpublicuserprofilegui', 'user', $user->getId());
+				$profile_target = $this->ctrl->getLinkTargetByClass('ilpublicuserprofilegui', 'getHTML');
+
+				if($pp)
+				{
+					$participants_tpl->setCurrentBlock('member_linked');
+					$participants_tpl->setVariable('LINK_PROFILE', $profile_target);
+					$participants_tpl->setVariable('NAME', ilUserUtil::getNamePresentation($user->getId()));
+					$participants_tpl->parseCurrentBlock();
+				}
+				else
+				{
+					$participants_tpl->setCurrentBlock('member_not_linked');
+					$participants_tpl->setVariable('NAME', ilUserUtil::getNamePresentation($user->getId()));
+					$participants_tpl->parseCurrentBlock();
+				}
+				
+				$participants_tpl->setCurrentBlock('members');
+				if($pp && $user->getPref('public_upload') == 'y')
+				{
+					$participants_tpl->setVariable('SRC_USR_IMAGE', $user->getPersonalPicturePath('xsmall'));
+				}
+				$participants_tpl->parseCurrentBlock();
+			}
+		}
+		
+		$tpl->setContent($participants_tpl->get());
+	}
+
+	/**
 	 * Overwriting this method is necessary to handle creation problems with the api
 	 */
 	public function save()
@@ -673,5 +820,71 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$newObj->addParticipants(array($ilUser->getId()), self::GDOC_WRITER);
 
 		parent::afterSave($newObj);
+	}
+
+	/**
+	 * @param string $a_sub_type
+	 * @param int $a_sub_id
+	 * @return ilObjectListGUI|ilObjGoogleDocsListGUI
+	 */
+	protected function initHeaderAction($a_sub_type = null, $a_sub_id = null)
+	{
+		/**
+		 * @var $ilUser ilObjUser
+		 */
+		global $ilUser;
+
+		$lg = parent::initHeaderAction();
+		if($lg instanceof ilObjGoogleDocsListGUI)
+		{
+			if($ilUser->getId() != ANONYMOUS_USER_ID)
+			{
+				// Maybe handle notifications in future ...
+			}
+		}
+
+		return $lg;
+	}
+
+	/**
+	 * @see ilDesktopItemHandling::addToDesk()
+	 */
+	public function addToDeskObject()
+	{
+		/**
+		 * @var $ilSetting ilSetting
+		 * @var $lng ilLanguage
+		 */
+		global $ilSetting, $lng;
+
+		if((int)$ilSetting->get('disable_my_offers'))
+		{
+			$this->showContent();
+			return;
+		}
+
+		include_once './Services/PersonalDesktop/classes/class.ilDesktopItemGUI.php';
+		ilDesktopItemGUI::addToDesktop();
+		ilUtil::sendSuccess($lng->txt('added_to_desktop'));
+		$this->showContent();
+	}
+
+	/**
+	 * @see ilDesktopItemHandling::removeFromDesk()
+	 */
+	public function removeFromDeskObject()
+	{
+		global $ilSetting, $lng;
+
+		if((int)$ilSetting->get('disable_my_offers'))
+		{
+			$this->showContent();
+			return;
+		}
+
+		include_once './Services/PersonalDesktop/classes/class.ilDesktopItemGUI.php';
+		ilDesktopItemGUI::removeFromDesktop();
+		ilUtil::sendSuccess($lng->txt('removed_from_desktop'));
+		$this->showContent();
 	}
 }

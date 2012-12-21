@@ -112,6 +112,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 							$writer,
 							$user_id
 						);
+						// @todo: Add writer permission via api
 					}
 					break;
 
@@ -123,6 +124,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 							$reader,
 							$user_id
 						);
+						// @todo: Add reader permission via api
 					}
 					break;
 

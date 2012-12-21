@@ -13,10 +13,14 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	 */
 	private static $instance;
 
-	/** @var string Google-Login */
+	/**
+	 * @var string Google-Login
+	 */
 	private $login = null;
 
-	/** @var  string Google-Password */
+	/**
+	 * @var string Google-Password
+	 */
 	private $password = null;
 
 	/**
@@ -24,20 +28,30 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	 */
 	private $tbl_settings = 'rep_robj_xgdo_settings';
 
-	/** @var Zend_Gdata_ClientLogin */
+	/**
+	 * @var Zend_Gdata_ClientLogin
+	 */
 	public $client = null;
 
-	/** @var Zend_Gdata_Docs */
+	/**
+	 * @var Zend_Gdata_Docs
+	 */
 	public $docs = null;
 
-	/** @var bool */
+	/**
+	 * @var bool
+	 */
 	public $is_proxy_enabled = false;
 
-	/** @var string */
-	private $proxy_host = null;
+	/**
+	 * @var string
+	 */
+	private $proxy_host = '';
 
-	/** @var  string */
-	private $proxy_port = null;
+	/**
+	 * @var  string
+	 */
+	private $proxy_port = '';
 
 	/**
 	 * @param Zend_Gdata_ClientLogin $client
