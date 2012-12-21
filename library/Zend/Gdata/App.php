@@ -610,6 +610,16 @@ class Zend_Gdata_App
                     (($minor === null) ? '.' + $minor : '');
         }
 
+		// Patch for final deletion
+		if('DELETE' == $method)
+		{
+			$url .= '?delete=true';
+		}
+		
+if($GLOBALS["debug"]){echo  "---------------------------<br>";var_dump($method, $url, $headers, $body, $contentType);}
+		
+		
+		
         // check the overridden method
         if (($method == 'POST' || $method == 'PUT') && $body === null &&
             $headers['x-http-method-override'] != 'DELETE') {
@@ -934,7 +944,7 @@ class Zend_Gdata_App
      * DELETE entry with client object
      *
      * @param mixed $data The Zend_Gdata_App_Entry or URL to delete
-     * @return void
+     * @return Zend_Http_Response The response object
      * @throws Zend_Gdata_App_Exception
      * @throws Zend_Gdata_App_HttpException
      * @throws Zend_Gdata_App_InvalidArgumentException

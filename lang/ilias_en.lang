@@ -33,3 +33,20 @@ doctype#:#File-Type
 doctype_not_valid#:#The file-type is not valid.
 err_cr_type_mismatch#:#The chosen document type is currently not supported.
 err_cr_incomplete#:#An error occured during the creation process.
+reader_short_add#:#Reader
+writer_short_add#:#Writer
+reader#:#Reader (May read)
+writer#:#Writer (May write)
+readers#:#Readers (May read)
+writers#:#Writers (May write)
+participants#:#Participants
+search_users#:#Search Users
+google_account#:#Ihr Google-Account
+google_account_info#:#Bitte tragen Sie hier Ihren Google-Account ein. <span style="font-weight:bold;color:red">Wichtig: Dieser Account muss bereits exisitieren, damit Sie die Berechtigung für das erstellte Dokument erhalten.</span>
+participants_removed_s#:#Der Teilnehmer wurde erfolgreich entfernt. Bitte beachten Sie, dass für den entsprechenden Google-Account die Berechtigungen für das Dokument entzogen wurden.
+participants_removed_p#:#Die Teilnehmer wurden erfolgreich entfernt. Bitte beachten Sie, dass für die entsprechenden Google-Accounts die Berechtigungen für das Dokument entzogen wurden.
+remove_participants_info_s#:#Möchten Sie den gewählten Teilnehmer wirklich entfernen? Bitte beachten Sie, dass die Berechtigungen des entsprechenden Google-Accounts auf das Dokument ebenfalls entzogen werden.
+remove_participants_info_p#:#Möchten Sie die gewählten Teilnehmer wirklich entfernen? Bitte beachten Sie, dass die Berechtigungen der entsprechenden Google-Accounts auf das Dokument ebenfalls entzogen werden.
+send_mail#:#Mitlied eine E-Mail senden
+assigned_users_s#:#Der Benutzer wurde erfolgreich hinzugefügt.
+assigned_users_p#:#Die Benutzer wurden erfolgreich hinzugefügt.

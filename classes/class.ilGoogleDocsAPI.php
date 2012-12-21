@@ -56,15 +56,15 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param docs $docs
+	 * @param Zend_Gdata_Docs $docs
 	 */
-	public function setDocs($docs)
+	public function setDocs(Zend_Gdata_Docs $docs)
 	{
 		$this->docs = $docs;
 	}
 
 	/**
-	 * @return docs
+	 * @return Zend_Gdata_Docs
 	 */
 	public function getDocs()
 	{

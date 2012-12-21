@@ -22,6 +22,16 @@ interface ilGoogleDocsConstants
 	const GOOGLE_PPT = 3;
 
 	/**
+	 * @var int
+	 */
+	const GDOC_READER = 1;
+
+	/**
+	 * @var int
+	 */
+	const GDOC_WRITER = 2;
+
+	/**
 	 * @var string
 	 */
 	const CREATION_ERROR_INCOMPLETE = 'err_cr_incomplete';
@@ -31,5 +41,8 @@ interface ilGoogleDocsConstants
 	 */
 	const CREATION_ERROR_TYPE_MISMATCH = 'err_cr_type_mismatch';
 
+	/**
+	 * @var string
+	 */
 	const ERROR_ACCOUNT_DATA = 'err_account_data';
 }

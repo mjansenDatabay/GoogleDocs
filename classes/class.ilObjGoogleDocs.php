@@ -23,6 +23,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 * @var string
 	 */
 	private $edit_doc_url = '';
+
+	/**
+	 * @var array
+	 */
+	private $local_roles = array();
 	
 	/**
 	 * @param int $ref_id
@@ -31,6 +36,162 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	{
 		parent::__construct($ref_id);
 		$this->plugin->includeClass('class.ilGoogleDocsAPI.php');
+	}
+
+	/**
+	 * @return array|void
+	 */
+	public function initDefaultRoles()
+	{
+		/**
+		 * @var $rbacadmin  ilRbacAdmin
+		 * @var $rbacreview ilRbacReview
+		 * @var $ilDB       ilDB
+		 */
+		global $rbacadmin, $rbacreview, $ilDB;
+
+		$rolf_obj = $this->createRoleFolder();
+
+		/**
+		 * @var $role_obj ilObjRole
+		 */
+		$role_obj = $rolf_obj->createRole('il_xgdo_reader_' . $this->getRefId(), 'Reader of google docs object obj_no.' . $this->getId());
+		$query = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+
+		$row = $ilDB->fetchAssoc(
+			$ilDB->queryF(
+				$query,
+				array('text', 'text'),
+				array('rolt', 'il_xgdo_reader')
+			)
+		);
+		$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
+		$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
+		$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
+
+
+		$role_obj = $rolf_obj->createRole('il_xgdo_writer_' . $this->getRefId(), 'Writer of google docs object obj_no.' . $this->getId());
+		$query = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+
+		$row = $ilDB->fetchAssoc(
+			$ilDB->queryF(
+				$query,
+				array('text', 'text'),
+				array('rolt', 'il_xgdo_writer')
+			)
+		);
+		$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
+		$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
+		$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
+
+		parent::initDefaultRoles();
+	}
+
+	/**
+	 * @param array $a_user_ids
+	 * @param int $a_type
+	 * @return bool
+	 * @throws InvalidArgumentException
+	 */
+	public function addParticipants(array $a_user_ids, $a_type)
+	{
+		/**
+		 * @var $rbacadmin ilRbacAdmin
+		 */
+		global $rbacadmin;
+
+		foreach((array) $a_user_ids as $user_id)
+		{
+			switch($a_type)
+			{
+				case self::GDOC_WRITER:
+					$writer = $this->getDefaultWriterRole();
+					if($writer)
+					{
+						$rbacadmin->assignUser(
+							$writer,
+							$user_id
+						);
+					}
+					break;
+
+				case self::GDOC_READER:
+					$reader = $this->getDefaultReaderRole();
+					if($reader)
+					{
+						$rbacadmin->assignUser(
+							$reader,
+							$user_id
+						);
+					}
+					break;
+
+				default:
+					throw new InvalidArgumentException(
+						'Invalid role type given'
+					);
+					break;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getDefaultWriterRole()
+	{
+		$local_roles = $this->getLocalRoles();
+		if(isset($local_roles['il_xgdo_writer_'.$this->getRefId()]))
+		{
+			return $local_roles['il_xgdo_writer_'.$this->getRefId()];
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getDefaultReaderRole()
+	{
+		$local_roles = $this->getLocalRoles();
+		if(isset($local_roles['il_xgdo_reader_'.$this->getRefId()]))
+		{
+			return $local_roles['il_xgdo_reader_'.$this->getRefId()];
+		}
+
+		return 0;
+	}
+
+	/**
+	 * @param bool $a_translate
+	 * @return array
+	 */
+	protected function getLocalRoles($a_translate = false)
+	{
+		/**
+		 * @var $rbacreview ilRbacReview
+		 */
+		global $rbacreview;
+
+		if(!$this->local_roles)
+		{
+			$this->local_roles = array();
+			$rolf              = $rbacreview->getRoleFolderOfObject($this->getRefId());
+			$role_arr          = $rbacreview->getRolesOfRoleFolder($rolf['ref_id']);
+
+			foreach($role_arr as $role_id)
+			{
+				if($rbacreview->isAssignable($role_id, $rolf['ref_id']) == true)
+				{
+					$this->local_roles[ilObject::_lookupTitle($role_id)] = $role_id;
+				}
+			}
+		}
+
+		return $this->local_roles;
 	}
 	
 	/**

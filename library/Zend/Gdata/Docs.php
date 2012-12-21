@@ -67,6 +67,19 @@ class Zend_Gdata_Docs extends Zend_Gdata
 
     protected $_defaultPostUri = self::DOCUMENTS_LIST_FEED_URI;
 
+    /**
+     * Namespaces used for Gdata data
+     *
+     * @var array
+     */
+    public static $namespaces = array(
+        array('gd', 'http://schemas.google.com/g/2005', 1, 0),
+        array('openSearch', 'http://a9.com/-/spec/opensearchrss/1.0/', 1, 0),
+        array('openSearch', 'http://a9.com/-/spec/opensearch/1.1/', 2, 0),
+        array('rss', 'http://blogs.law.harvard.edu/tech/rss', 1, 0),
+        array('gAcl', 'http://schemas.google.com/acl/2007', 1, 0)
+    );
+
     private static $SUPPORTED_FILETYPES = array(
       'TXT'=>'text/plain',
       'CSV'=>'text/csv',
@@ -85,6 +98,12 @@ class Zend_Gdata_Docs extends Zend_Gdata
       'PPS'=>'application/vnd.ms-powerpoint');
 
     /**
+     * Holds the array of feed entries.
+     * @var array of Zend_Gdata_Docs_BatchAclEntry objects
+     */
+    private $_batchOperations = array();
+
+    /**
      * Create Gdata_Docs object
      *
      * @param Zend_Http_Client $client (optional) The HTTP client to use when
@@ -94,6 +113,7 @@ class Zend_Gdata_Docs extends Zend_Gdata
     public function __construct($client = null, $applicationId = 'MyCompany-MyApp-1.0')
     {
         $this->registerPackage('Zend_Gdata_Docs');
+        $this->registerPackage('Zend_Gdata_Acl');
         parent::__construct($client, $applicationId);
         $this->_httpClient->setParameterPost('service', self::AUTH_SERVICE_NAME);
     }
@@ -162,7 +182,7 @@ class Zend_Gdata_Docs extends Zend_Gdata
      * @return Zend_Gdata_Docs_DocumentListEntry
      */
     public function getDoc($docId, $docType) {
-        $location = 'https://docs.google.com/feeds/documents/private/full/' .
+        $location = self::DOCUMENTS_LIST_FEED_URI . '/' .
             $docType . '%3A' . $docId;
         return $this->getDocumentListEntry($location);
     }
@@ -242,7 +262,8 @@ class Zend_Gdata_Docs extends Zend_Gdata
 
         // Set the mime type of the data.
         if ($mimeType === null) {
-          $filenameParts = explode('.', $fileLocation);
+          $slugHeader =  $fs->getSlug();
+          $filenameParts = explode('.', $slugHeader);
           $fileExtension = end($filenameParts);
           $mimeType = self::lookupMimeType($fileExtension);
         }
@@ -300,4 +321,267 @@ class Zend_Gdata_Docs extends Zend_Gdata
         return $this->insertEntry($data, $uri, $className);
     }
 
+    /**
+     * Gets the feed for the document's ACL.
+     * @param Zend_Gdata_Docs_DocumentListEntry|string $document The document list
+     * entry instance or GET URL i.e. the document's ACL URL
+     * @return string|Zend_Gdata_App_Feed
+     * @throws Zend_Gdata_App_InvalidArgumentException if the $document
+     * parameter is not specified or if it does not yield a URL
+     */
+    public function getAclFeed($document)
+    {
+        $uri = '';
+        if ($document instanceof Zend_Gdata_Docs_DocumentListEntry) {
+            foreach ($document->extensionElements as $extensionElement) {
+                if ($extensionElement->rootElement == 'feedLink') {
+                    $attributes = $extensionElement->getExtensionAttributes();
+                    $uri = $attributes['href']['value'];
+                    break;
+                }
+            }
+        } elseif (is_string($document)) {
+            $uri = $document;
+        }
+        if ($document == null || empty($uri)) {
+            require_once('Zend/Gdata/App/InvalidArgumentException.php');
+            throw new Zend_Gdata_App_InvalidArgumentException('Query URL not specified');
+        }
+        return parent::getFeed($uri, 'Zend_Gdata_Docs_AclFeed');
+    }
+
+    /**
+     * Inserts an entry to the document's ACL.
+     * @param Zend_Gdata_Docs_AclEntry $data The entry to post to the ACL URL
+     * to add a new ACL entry
+     * @param Zend_Gdata_Docs_DocumentListEntry|string $document The document list
+     * entry instance or POST URI i.e. the document's ACL URL
+     * @return Zend_Gdata_Docs_AclEntry
+     * @throws Zend_Gdata_App_InvalidArgumentException if the $document
+     * parameter is not specified or if it does not yield a URL
+     */
+    public function insertAcl(Zend_Gdata_Docs_AclEntry $data, $document)
+    {
+        $uri = '';
+        if ($document instanceof Zend_Gdata_Docs_DocumentListEntry) {
+            foreach ($document->extensionElements as $extensionElement) {
+                if ($extensionElement->rootElement == 'feedLink') {
+                    $attributes = $extensionElement->getExtensionAttributes();
+                    $uri = $attributes['href']['value'];
+                    break;
+                }
+            }
+        } elseif (is_string($document)) {
+            $uri = $document;
+        }
+        if ($document == null || empty($uri)) {
+            require_once('Zend/Gdata/App/InvalidArgumentException.php');
+            throw new Zend_Gdata_App_InvalidArgumentException('Insert URL not specified');
+        }
+        return $this->insertEntry($data, $uri, 'Zend_Gdata_Docs_AclEntry');
+    }
+
+    /**
+     * Updates the ACL entries of a document.
+     * @param Zend_Gdata_Docs_DocumentListEntry|string $document The document list
+     * entry instance or PUT URI i.e. the document's ACL URL
+     * @param string $userId The user ID to modify.
+     * @param string $role The role of the user. Acceptable values are 'reader',
+     * 'writer' and 'owner'.
+     * @return Zend_Gdata_Docs_AclEntry
+     * @throws Zend_Gdata_App_InvalidArgumentException if the $document
+     * parameter is not specified or if it does not yield a URL
+     */
+    public function updateAcl($document, $userId, $role)
+    {
+        $uri = '';
+        if ($document instanceof Zend_Gdata_Docs_DocumentListEntry) {
+            foreach ($document->extensionElements as $extensionElement) {
+                if ($extensionElement->rootElement == 'feedLink') {
+                    $attributes = $extensionElement->getExtensionAttributes();
+                    $uri = $attributes['href']['value'];
+                    $query = new Zend_Gdata_Docs_AclQuery($uri);
+                    $query->setUserId($userId);
+                    $uri = $query->getQueryUrl();
+                    break;
+                }
+            }
+        } elseif (is_string($document)) {
+            $uri = $document;
+        }
+        if ($document == null || empty($uri)) {
+            require_once('Zend/Gdata/App/InvalidArgumentException.php');
+            throw new Zend_Gdata_App_InvalidArgumentException('Update URL not specified');
+        }
+
+        $aclEntry = new Zend_Gdata_Docs_AclEntry();
+        $aclEntry->setAclRole($this->newRole($role))
+                 ->setAclScope($this->newScope($userId));
+        $aclEntry->category = array(new Zend_Gdata_App_Extension_Category(
+            'http://schemas.google.com/acl/2007#accessRule', 'http://schemas.google.com/g/2005#kind'));
+        return $this->updateEntry($aclEntry, $uri, 'Zend_Gdata_Docs_AclEntry');
+    }
+
+    /**
+     * Removes an entry from the document's ACL.
+     * @param Zend_Gdata_Docs_DocumentListEntry|string $document The document list
+     * entry instance or DELETE URI i.e. the document's ACL URL
+     * @param string $userId The user ID to remove from the ACL.
+     * @return Zend_Http_Response The response object
+     * @throws Zend_Gdata_App_InvalidArgumentException if the $document
+     * parameter is not specified or if it does not yield a URL
+     */
+    public function deleteAcl($document, $userId)
+    {
+        $uri = '';
+        if ($document instanceof Zend_Gdata_Docs_DocumentListEntry) {
+            foreach ($document->extensionElements as $extensionElement) {
+                if ($extensionElement->rootElement == 'feedLink') {
+                    $attributes = $extensionElement->getExtensionAttributes();
+                    $uri = $attributes['href']['value'];
+                }
+            }
+        } elseif (is_string($document)) {
+            $uri = $document;
+        }
+        if ($document == null || empty($uri)) {
+            require_once('Zend/Gdata/App/InvalidArgumentException.php');
+            throw new Zend_Gdata_App_InvalidArgumentException('Delete URL not specified');
+        }
+        $query = new Zend_Gdata_Docs_AclQuery($uri);
+        $query->setUserId($userId);
+        return $this->delete($query->getQueryUrl());
+    }
+
+    /**
+     * Adds an operation to include for batch processing.
+     * This function does not invoke the actual batch processing.
+     * @param string $operation The operation type. Accepted values are 'query',
+     * 'insert', 'update' and 'delete'. Batch IDs for query operations are
+     * automatically generated starting from integer 1.
+     * @param string $docId The identifier of the document. This value must
+     * be omitted for 'insert' operations. This value should be the href value
+     * of the <gd:feedLink> element.
+     * @param string $role The role of the user with regards to the document.
+     * Accepted values are 'owner', 'writer' and 'reader'. This value must be
+     * omitted for 'query' operations.
+     * @param string $scopeValue The username of the user's privilege on the
+     * specified document. This value must be omitted for 'query' operations.
+     * @param string $scopeType The type of user account. By default the value
+     * is 'user'.
+     * @return Zend_Gdata_Docs Provides a fluent interface
+     * @throws Zend_Gdata_App_InvalidArgumentException If any of the parameters
+     * is specified wrongly, an exception will be thrown.
+     */
+    public function addBatchAclEntry($operation, $docId=null, $role=null,
+        $scopeValue=null, $scopeType='user')
+    {
+        switch ($operation) {
+            case 'query':
+                if ($role !== null || $scopeValue !== null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "No role or scope should be specified for 'query' operations");
+                }
+                if ($docId === null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "Document ACL URL must be specified for 'query' operations");
+                }
+
+                $entry = $this->newBatchAclEntry();
+                $entry->id = $this->newId($docId);
+                $entry->batchOperation = new Zend_Gdata_Batch_Operation('query');
+                $this->_batchOperations[] = $entry;
+
+                break;
+            case 'insert':
+                if ($docId !== null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "No document ID should be specified for 'insert' operations");
+                }
+                if ($role === null || $scopeValue === null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "'role' and 'scope' values must be specified for 'insert' operations");
+                }
+
+                $entry = $this->newBatchAclEntry();
+                $batchId = count($this->_batchOperations)+1;
+                $entry->batchId = new Zend_Gdata_Batch_Id($batchId);
+                $entry->batchOperation = new Zend_Gdata_Batch_Operation('insert');
+                $entry->aclRole = new Zend_Gdata_Acl_Role($role);
+                $entry->aclScope = new Zend_Gdata_Acl_Scope($scopeValue, $scopeType);
+                $this->_batchOperations[] = $entry;
+
+                break;
+            case 'update':
+                if ($docId === null || $role === null || $scopeValue === null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "'docId', 'role' and 'scope' values must be specified for 'update' operations");
+                }
+
+                $entry = $this->newBatchAclEntry();
+                $entry->id = $this->newId($docId);
+                $entry->batchOperation = new Zend_Gdata_Batch_Operation('update');
+                $entry->aclRole = new Zend_Gdata_Acl_Role($role);
+                $entry->aclScope = new Zend_Gdata_Acl_Scope($scopeValue, $scopeType);
+                $this->_batchOperations[] = $entry;
+
+                break;
+            case 'delete':
+                if ($docId === null || $role === null || $scopeValue === null) {
+                    throw new Zend_Gdata_App_InvalidArgumentException(
+                        "'docId', role' and 'scope' values must be specified for 'delete' operations");
+                }
+
+                $entry = $this->newBatchAclEntry();
+                $entry->id = $this->newId($docId);
+                $entry->batchOperation = new Zend_Gdata_Batch_Operation('delete');
+                $entry->aclRole = new Zend_Gdata_Acl_Role($role);
+                $entry->aclScope = new Zend_Gdata_Acl_Scope($scopeValue, $scopeType);
+                $this->_batchOperations[] = $entry;
+
+                break;
+            default:
+                throw new Zend_Gdata_App_InvalidArgumentException(
+                    "Accepted operation types are 'query', 'insert', 'update' and 'delete'");
+                break;
+            return $this;
+        }
+    }
+
+    /**
+     * Clears all entries for batch processing.
+     * @return Zend_Gdata_Docs Provides a fluent interface
+     */
+    public function clearBatchAclEntries()
+    {
+        $this->_batchOperations = array();
+        return $this;
+    }
+
+    /**
+     * Performs the batch processing on the operations added to this instance.
+     * The batch operations are cleared after they are performed by this method.
+     * @param string $feedUrl The URL of the document's ACL API. Note that the
+     * URL has to end with '/batch'.
+     * @return Zend_Gdata_Docs_BatchAclFeed
+     * @see http://code.google.com/apis/documents/docs/2.0/developers_guide_protocol.html#ACLBatch
+     * @throws Zend_Gdata_App_InvalidArgumentException If the API URL does not
+     * end with '/batch', an exception will be thrown.
+     */
+    public function doBatchAcl($feedUrl)
+    {
+        if (!preg_match('/\/batch$/', $feedUrl)) {
+            throw new Zend_Gdata_App_InvalidArgumentException(
+                "The feed URL must contain '/batch' at the end");
+        }
+        $batchFeed = $this->newBatchAclFeed();
+        foreach ($this->_batchOperations as $entry) {
+            $batchFeed->addEntry($entry);
+        }
+
+        $this->clearBatchAclEntries();
+        $response = $this->post($batchFeed->saveXML(), $feedUrl, 'Zend_Gdata_Docs_BatchAclFeed');
+        $returnEntry = new Zend_Gdata_Docs_BatchAclFeed($response->getBody());
+        return $returnEntry;
+    }
 }
