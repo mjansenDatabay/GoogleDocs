@@ -111,8 +111,14 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->$cmd();
 						break;
 
+					case 'addToDesk':
+					case 'removeFromDesk':
 					case 'showParticipantsGallery':
 					case 'showContent':
+						if(in_array($cmd, array('addToDesk', 'removeFromDesk')))
+						{
+							$cmd .= 'Object';
+						}
 						$this->checkPermission('read');
 						$this->$cmd();
 						break;
