@@ -141,12 +141,12 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		 */
 		global $ilTabs, $ilCtrl, $ilAccess;
 
-		$this->addInfoTab();
-
 		if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
 		{
 			$ilTabs->addTab('content', $this->txt('content'), $ilCtrl->getLinkTarget($this, 'showContent'));
 		}
+
+		$this->addInfoTab();
 
 		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
@@ -273,6 +273,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
 		$content_tpl->setVariable('URL', $this->object->getEditDocUrl());
 
+		$tpl->setPermanentLink($this->object->getType(), $this->object->getRefId());
 		$tpl->setContent($html . $content_tpl->get());
 	}
 
