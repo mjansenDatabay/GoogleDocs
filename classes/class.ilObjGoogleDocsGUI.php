@@ -111,6 +111,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->$cmd();
 						break;
 
+					case 'redrawHeaderAction':
 					case 'addToDesk':
 					case 'removeFromDesk':
 					case 'showParticipantsGallery':
