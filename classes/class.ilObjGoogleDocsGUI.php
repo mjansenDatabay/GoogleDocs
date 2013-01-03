@@ -9,7 +9,7 @@ require_once 'Services/PersonalDesktop/interfaces/interface.ilDesktopItemHandlin
 
 /**
  * @ilCtrl_isCalledBy ilObjGoogleDocsGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
- * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI
+ * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI, ilExportGUI
  */
 class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants, ilDesktopItemHandling
 {
@@ -97,6 +97,16 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$this->ctrl->forwardCommand($rep_search);
 				break;
 
+			case 'ilexportgui':
+				$this->checkPermission('write');
+				$ilTabs->activateTab('export');
+
+				include_once 'Services/Export/classes/class.ilExportGUI.php';
+				$exp = new ilExportGUI($this);
+				$this->addSupportedExportFormats($exp);
+				$this->ctrl->forwardCommand($exp);
+				break;
+
 			default:
 				switch($cmd)
 				{
@@ -123,11 +133,126 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->checkPermission('read');
 						$this->$cmd();
 						break;
+					
+					default:
+						if(!method_exists($this, $cmd))
+						{
+							$this->$cmd();
+						}
+						break;
 				}
 				break;
 		}
 
 		$this->addHeaderAction();
+	}
+
+	/**
+	 * @param  string $name
+	 * @param array   $arguments
+	 * @throws RuntimeException
+	 */
+	public function __call($name, array $arguments)
+	{
+		$method_parts = explode('_', strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $name)));
+		if('export' == $method_parts[0])
+		{
+			$this->performExport($method_parts[2]);
+			return;
+		}
+
+		throw new RuntimeException("Called method {$name} currently not supported");
+	}
+
+	/**
+	 * @param string $type
+	 */
+	protected function performExport($type)
+	{
+		/**
+		 * @var $ilLog ilLog
+		 */
+		global $ilLog;
+
+		$this->checkPermission('write');
+
+		try
+		{
+			$response = $this->object->getExportData($type);
+
+			include_once 'Services/Export/classes/class.ilExport.php';
+			ilExport::_createExportDirectory($this->object->getId(), $type, $this->object->getType());
+			$export_directory = ilExport::_getExportDirectory($this->object->getId(), $type, $this->object->getType());
+			$ts               = time();
+
+			$sub_dir        = $ts . '__' . IL_INST_ID . '__' . $this->object->getType() . '_' . $this->object->getId();
+			$new_file       = $sub_dir . '.zip';
+			$export_run_dir = $export_directory . '/' . $sub_dir;
+
+			ilUtil::makeDirParents($export_run_dir);
+
+			$matches = null;
+			preg_match('/filename="(.*\.[a-zA-Z]{3,4})".*$/', $response->getHeader('Content-disposition'), $matches);
+			$filename = $matches[1];
+			file_put_contents($export_run_dir . '/' . $filename, $response->getBody());
+
+			ilUtil::zip($export_run_dir, $export_directory . '/' . $new_file);
+			ilUtil::delDir($export_run_dir);
+
+			include_once 'Services/Export/classes/class.ilExportFileInfo.php';
+			$exp = new ilExportFileInfo($this->object->getId());
+			$exp->setVersion(ILIAS_VERSION_NUMERIC);
+			$exp->setCreationDate(new ilDateTime($ts, IL_CAL_UNIX));
+			$exp->setExportType($type);
+			$exp->setFilename($new_file);
+			$exp->create();
+		}
+		catch(Exception $e)
+		{
+			//@todo: Handle Exception
+			$ilLog->write($e->getMessage());
+			$ilLog->logStack();
+			ilUtil::sendFailure($e->getMessage(), true);
+		}
+	}
+
+	/**
+	 * @param ilExportGUI $exportgui
+	 */
+	protected function addSupportedExportFormats(ilExportGUI $exportgui)
+	{
+		switch($this->object->getDocType())
+		{
+			case self::GOOGLE_DOC:
+				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
+				$exportgui->addFormat('html', $this->plugin->txt('exp_html'), $this, 'exportToHtml');
+				$exportgui->addFormat('odt', $this->plugin->txt('exp_odt'), $this, 'exportToOdt');
+				$exportgui->addFormat('docx', $this->plugin->txt('exp_docx'), $this, 'exportToDocx');
+				$exportgui->addFormat('rtf', $this->plugin->txt('exp_rtf'), $this, 'exportToRtf');
+				$exportgui->addFormat('txt', $this->plugin->txt('exp_txt'), $this, 'exportToTxt');
+				break;
+
+			// @todo: Implement export for spreadsheets
+			/*
+			case self::GOOGLE_XLS:
+				$exportgui->addFormat('ods', '', $this, 'exportToOds');
+				$exportgui->addFormat('xlsx', '', $this, 'exportToXlsx');
+				break;
+			*/
+
+			case self::GOOGLE_PPT:
+				$exportgui->addFormat('txt', $this->plugin->txt('exp_txt'), $this, 'exportToTxt');
+				$exportgui->addFormat('svg', $this->plugin->txt('exp_svg'), $this, 'exportToSvg');
+				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
+				$exportgui->addFormat('pptx', $this->plugin->txt('exp_pptx'), $this, 'exportToPptx');
+				$exportgui->addFormat('png', $this->plugin->txt('exp_png'), $this, 'exportToPng');
+				$exportgui->addFormat('jpg', $this->plugin->txt('exp_jpg'), $this, 'exportToJpg');
+				break;
+
+			default:
+				throw new InvalidArgumentException("Document type {$this->object->getDocType()} not supported");
+				break;
+		}
 	}
 
 	/**
@@ -161,6 +286,17 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		else if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
 		{
 			$ilTabs->addTab('members', $this->txt('members'), $this->ctrl->getLinkTarget($this, 'showParticipantsGallery'));
+		}
+
+		// @todo: Implement export for spreadsheets
+		if($this->object->getDocType() != self::GOOGLE_XLS && $ilAccess->checkAccess('write','',$this->object->getRefId()))
+		{
+			$ilTabs->addTarget(
+				'export',
+				$this->ctrl->getLinkTargetByClass('ilexportgui', ''),
+				'export',
+				'ilexportgui'
+			);
 		}
 
 		$this->addPermissionTab();

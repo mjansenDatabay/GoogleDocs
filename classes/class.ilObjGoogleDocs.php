@@ -315,8 +315,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 			$role = new Zend_Gdata_Acl_Role();
 			$role->setValue('writer');
 			$scope = new Zend_Gdata_Acl_Scope();
-			// @todo: Add google account for owner
-			$scope->setValue($ilUser->getEmail());
+			$scope->setValue(ilUtil::stripSlashes($_POST['google_account']));
 			$scope->setType('user');
 			$acl_entry = new Zend_Gdata_Docs_AclEntry();
 			$acl_entry->setAclRole($role);
@@ -393,65 +392,63 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		}
 
 		$ilDB->manipulate('DELETE FROM rep_robj_xgdo_data WHERE obj_id = ' . $ilDB->quote($this->getId(), 'integer'));
+
+		include_once 'Services/Export/classes/class.ilExport.php';
+		include_once 'Services/Export/classes/class.ilExportFileInfo.php';
+		ilUtil::delDir(dirname(ilExport::_getExportDirectory($this->getId(), '', $this->getType())));
+		ilExportFileInfo::deleteByObjId($this->getId());
 	}
 
 	/**
 	 * @param ilObjGoogleDocs $new_obj
 	 * @param int             $a_target_id
 	 * @param int             $a_copy_id
+	 * @throws ilException
 	 */
 	public function doCloneObject($new_obj, $a_target_id, $a_copy_id)
 	{
-		/**
-		 * @var $ilDB  ilDB
-		 * @var $ilLog ilLog
-		 */
-		global $ilDB, $ilLog;
+		throw new ilException('Cloning is currently not implemented');
+	}
 
-		$res    = $ilDB->queryF(
-			'SELECT * FROM rep_robj_xgdo_data WHERE obj_id = %s',
-			array('integer'),
-			array($this->getId())
-		);
-		$source = array();
-		while($row = $ilDB->fetchAssoc($res))
+	/**
+	 * @param string $type
+	 * @return Zend_Http_Response
+	 * @throws InvalidArgumentException
+	 */
+	public function getExportData($type)
+	{
+		$api = ilGoogleDocsAPI::getInstance();
+		$document = $api->docs->getDocumentListEntry($this->getDocUrl());
+
+		if('jpg' == $type)
 		{
-			$source = $row;
+			$type = 'jpeg';
 		}
 
-		try
+		switch($this->getDocType())
 		{
-			$api        = ilGoogleDocsAPI::getInstance();
-			$new_doc    = $api->copyDocument($source['doc_url'], $source['doc_type'], $new_obj->getTitle());
-			$new_doc_id = $new_doc->getText();
-			$document   = $api->docs->getDocumentListEntry($new_doc_id);
-			foreach($document->getLink() as $link)
-			{
-				/**
-				 * @var $link Zend_Gdata_App_Extension_link
-				 */
+			case self::GOOGLE_DOC:
+				$id = preg_replace('/(.*document%3A)/', '', $document->getId());
+				$response = $api->docs->get("https://docs.google.com/feeds/download/documents/export/Export?id={$id}&format={$type}");
+				break;
 
-				if($link->getRel() == 'alternate')
-				{
-					$new_edit_doc_url = $link->getHref();
-				}
-			}
+			case self::GOOGLE_XLS:
+				$id = preg_replace('/(.*spreadsheet%3A)/', '', $document->getId());
 
-			$ilDB->insert(
-				'rep_robj_xgdo_data',
-				array(
-					'obj_id'       => array('integer', $new_obj->getId()),
-					'doc_type'     => array('integer', $source['doc_type']),
-					'doc_url'      => array('text', $new_doc_id),
-					'edit_doc_url' => array('text', $new_edit_doc_url)
-				)
-			);
+				// @todo: Implement export for spreadsheets
+				throw new InvalidArgumentException("Export type {$type} for spreadsheet not supported");
+				break;
+
+			case self::GOOGLE_PPT:
+				$id = preg_replace('/(.*presentation%3A)/', '', $document->getId());
+				$response = $api->docs->get("https://docs.google.com/presentation/d/{$id}/export/{$type}?id={$id}");
+				break;
+			
+			default:
+				throw new InvalidArgumentException("Document type {$this->getDocType()} not supported");
+				break;
 		}
-		catch(Exception $e)
-		{
-			//@todo: Handle Exception
-			$ilLog->write($e->getMessage());
-			$ilLog->logStack();
-		}
+
+		return $response;
 	}
 }
