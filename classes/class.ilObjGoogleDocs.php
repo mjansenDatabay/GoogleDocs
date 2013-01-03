@@ -276,10 +276,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function doCreate()
 	{
 		/**
-		 * @var $ilDB  ilDB
-		 * @var $ilLog ilLog
+		 * @var $ilDB   ilDB
+		 * @var $ilLog  ilLog
+		 * @var $ilUser ilObjUser
 		 */
-		global $ilDB, $ilLog;
+		global $ilDB, $ilLog, $ilUser;
 
 		$this->setDocType((int)$_POST['doc_type']);
 
@@ -315,7 +316,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 			$role->setValue('writer');
 			$scope = new Zend_Gdata_Acl_Scope();
 			// @todo: Add google account for owner
-			$scope->setValue('mjansen@databay.de');
+			$scope->setValue($ilUser->getEmail());
 			$scope->setType('user');
 			$acl_entry = new Zend_Gdata_Docs_AclEntry();
 			$acl_entry->setAclRole($role);
