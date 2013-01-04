@@ -121,6 +121,11 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->$cmd();
 						break;
 
+					case 'join':
+					case 'leave':
+						$this->checkPermission('visible');
+						$this->$cmd();
+
 					case 'redrawHeaderAction':
 					case 'addToDesk':
 					case 'removeFromDesk':
@@ -145,6 +150,43 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 
 		$this->addHeaderAction();
+	}
+
+	/**
+	 * 
+	 */
+	public function join()
+	{
+		/**
+		 * @var $ilCtrl ilCtrl
+		 * @var $ilUser ilObjUser 
+		 */
+		global $ilCtrl, $ilUser;
+
+		if(
+			ilObjGoogleDocsAccess::_hasReaderRole($ilUser->getId(), $this->ref_id)
+			||
+			ilObjGoogleDocsAccess::_hasWriterRole($ilUser->getId(), $this->ref_id)
+		)
+		{
+			ilUtil::sendInfo($this->txt('already_member'), true);
+			$ilCtrl->redirect($this, 'showContent');
+		}
+
+		try
+		{
+			// @todo: Check already assigned members, if no user has to be assigned, send a failure message
+			$this->object->addParticipants(array($ilUser->getId()), self::GDOC_READER);
+			ilObjUser::_addDesktopItem($ilUser->getId(), $this->object->getRefId(), 'xgdo');
+		}
+		catch(Exception $e)
+		{
+			ilUtil::sendFailure($e->getMessage(), true);
+			$ilCtrl->redirect($this, 'infoScreen');
+		}
+
+		ilUtil::sendSuccess($this->plugin->txt('joined_successfully'), true);
+		$ilCtrl->redirect($this, 'showContent');
 	}
 
 	/**
