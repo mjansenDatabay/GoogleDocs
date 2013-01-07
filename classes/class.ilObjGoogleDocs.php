@@ -401,7 +401,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 */
 	public function grantAclPermissions(ilGoogleDocsParticipant $participant)
 	{
-		$api        = ilGoogleDocsAPI::getInstance();
+		$api = ilGoogleDocsAPI::getInstance();
 
 		$document   = $api->getDocs()->getDocumentListEntry((string)$this->getDocUrl());
 		$feed       = $api->getDocs()->getAclFeed($document);
@@ -428,6 +428,16 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	}
 
 	/**
+	 * @param string $google_account
+	 */
+	public function revokeAclPermissions($google_account)
+	{
+		$api      = ilGoogleDocsAPI::getInstance();
+		$document = $api->getDocs()->getDocumentListEntry((string)$this->getDocUrl());
+		$api->getDocs()->deleteAcl($document, $google_account);
+	}
+
+	/**
 	 * @param Zend_Gdata_App_Feed     $feed
 	 * @param ilGoogleDocsParticipant $participant
 	 * @return string
@@ -444,7 +454,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 			if('user' == $scope->getType() &&
 				(
 					$participant->getGoogleAccount() == $scope->getValue() ||
-					str_replace('@gmail.com', '@googlemail.com', $participant->getGoogleAccount()) == $scope->getValue()
+						str_replace('@gmail.com', '@googlemail.com', $participant->getGoogleAccount()) == $scope->getValue()
 				)
 			)
 			{

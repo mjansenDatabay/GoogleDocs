@@ -891,10 +891,15 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		{
 			try
 			{
+				if($participants->hasParticipantGoogleAccountById($usr_id))
+				{
+					$this->object->revokeAclPermissions($participants->getGoogleAccountById($usr_id));
+				}
 				$participants->delete($usr_id);
 			}
 			catch(Exception $e)
 			{
+				// @todo: Exception handling
 			}
 		}
 

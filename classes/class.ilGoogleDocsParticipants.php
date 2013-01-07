@@ -278,4 +278,22 @@ class ilGoogleDocsParticipants implements ilGoogleDocsConstants
 	{
 		return $this->type;
 	}
+
+	/**
+	 * @param int $usr_id
+	 * @return mixed
+	 */
+	public function getGoogleAccountById($usr_id)
+	{
+		return $this->participants_status[$usr_id]['google_account'];
+	}
+
+	/**
+	 * @param int $usr_id
+	 * @return bool
+	 */
+	public function hasParticipantGoogleAccountById($usr_id)
+	{
+		return isset($this->participants_status[$usr_id]['google_account']) && strlen($this->participants_status[$usr_id]['google_account']);
+	}
 }
