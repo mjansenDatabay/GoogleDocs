@@ -75,3 +75,5 @@ joined_successfully#:#Sie sind dem Objekt erfolgreich beigetreten.
 google_account_participant_info#:#Bitte tragen Sie hier Ihren Google-Account ein. <span style="font-weight:bold;color:red">Wichtig: Dieser Account muss bereits exisitieren, damit Sie die Berechtigung für das erstellte Dokument automatisch erhalten.</span>
 google_account_participant_form_desc#:#Dieser Schritt findet für dieses Objekt nur einmalig statt und wird benötigt, damit ILIAS Ihnen automatisch die entsprechenden Berechtigungen für das Dokument erteilen kann.
 google_account_participant_form_title#:#Eingabe Ihres Google-Accounts
+no_users_assigned_p#:#Von den gewählten Benutzern konnte niemand als Teilnehmer hinzugefügt werden.
+no_users_assigned_s#:#Der gewählte Benutzer konnte nicht als Teilnehmer hinzugefügt werden.

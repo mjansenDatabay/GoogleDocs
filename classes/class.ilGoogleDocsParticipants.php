@@ -166,13 +166,25 @@ class ilGoogleDocsParticipants implements ilGoogleDocsConstants
 		switch($type)
 		{
 			case self::GDOC_WRITER:
-				$this->participants[$usr_id] = true;
-				$this->writers[$usr_id]      = true;
+				if(!in_array($usr_id, $this->participants))
+				{
+					$this->participants[] = $usr_id;
+				}
+				if(!in_array($usr_id, $this->writers))
+				{
+					$this->writers[] = $usr_id;
+				}
 				break;
 
 			case self::GDOC_READER:
-				$this->participants[$usr_id] = true;
-				$this->readers[$usr_id]      = true;
+				if(!in_array($usr_id, $this->participants))
+				{
+					$this->participants[] = $usr_id;
+				}
+				if(!in_array($usr_id, $this->readers))
+				{
+					$this->readers[] = $usr_id;
+				}
 				break;
 
 			default:

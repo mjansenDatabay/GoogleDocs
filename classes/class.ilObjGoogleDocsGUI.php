@@ -459,6 +459,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		return $this->google_account_form;
 	}
 
+	/**
+	 *
+	 */
 	protected function saveGoogleAccount()
 	{
 		/**
@@ -863,6 +866,10 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		{
 			ilUtil::sendSuccess($this->plugin->txt('assigned_users' . (count($added_users) == 1 ? '_s' : '_p')), true);
 		}
+		else
+		{
+			ilUtil::sendFailure($this->plugin->txt('no_users_assigned' . (count($user_ids) == 1 ? '_s' : '_p')), true);
+		}
 
 		$this->ctrl->redirect($this, 'editParticipants');
 	}
@@ -896,7 +903,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 * @return bool
+	 *
 	 */
 	protected function confirmDeleteParticipants()
 	{
@@ -967,7 +974,11 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$rcps = array();
 		foreach($_POST['participants'] as $usr_id)
 		{
-			$rcps[] = ilObjUser::_lookupLogin((int)$usr_id);
+			$login = ilObjUser::_lookupLogin((int)$usr_id);
+			if(strlen($login))
+			{
+				$rcps[] = $login;
+			}
 		}
 
 		if(!$rcps)

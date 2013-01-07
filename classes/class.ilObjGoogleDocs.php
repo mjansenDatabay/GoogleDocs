@@ -401,31 +401,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 */
 	public function grantAclPermissions(ilGoogleDocsParticipant $participant)
 	{
-		$api      = ilGoogleDocsAPI::getInstance();
-		$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
-		$feed     = $api->getDocs()->getAclFeed($document);
-		$role     = null;
-		foreach($feed->getEntry() as $entry)
-		{
-			/**
-			 * @var $entry Zend_Gdata_Docs_AclEntry
-			 */
-			$scope = $entry->getAclScope();
-			if('user' == $scope->getType() &&
-				$participant->getGoogleAccount() == $scope->getValue() ||
-				str_replace('@gmail.com', '@googlemail.com', $participant->getGoogleAccount()) == $scope->getValue()
-			)
-			{
-				$role = $entry->getAclRole();
-				break;
-			}
-		}
+		$api        = ilGoogleDocsAPI::getInstance();
 
-		$role_value = '';
-		if($role instanceof Zend_Gdata_Acl_Role)
-		{
-			$role_value = $role->getValue();
-		}
+		$document   = $api->getDocs()->getDocumentListEntry((string)$this->getDocUrl());
+		$feed       = $api->getDocs()->getAclFeed($document);
+		$role_value = $this->extractAclRoleValue($feed, $participant);
 
 		switch(true)
 		{
@@ -445,6 +425,40 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 				$this->updateAclEntry($participant, $document, self::GDOC_READER);
 				break;
 		}
+	}
+
+	/**
+	 * @param Zend_Gdata_App_Feed     $feed
+	 * @param ilGoogleDocsParticipant $participant
+	 * @return string
+	 */
+	protected function extractAclRoleValue(Zend_Gdata_App_Feed $feed, ilGoogleDocsParticipant $participant)
+	{
+		$role = null;
+		foreach($feed->getEntry() as $entry)
+		{
+			/**
+			 * @var $entry Zend_Gdata_Docs_AclEntry
+			 */
+			$scope = $entry->getAclScope();
+			if('user' == $scope->getType() &&
+				(
+					$participant->getGoogleAccount() == $scope->getValue() ||
+					str_replace('@gmail.com', '@googlemail.com', $participant->getGoogleAccount()) == $scope->getValue()
+				)
+			)
+			{
+				$role = $entry->getAclRole();
+				break;
+			}
+		}
+
+		if($role instanceof Zend_Gdata_Acl_Role)
+		{
+			return $role->getValue();
+		}
+
+		return '';
 	}
 
 	/**

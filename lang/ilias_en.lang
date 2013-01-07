@@ -50,8 +50,8 @@ participants_removed_p#:#The members were successfully deleted.
 remove_participants_info_s#:#Do you really want to delete the selected member?
 remove_participants_info_p#:#Do you really want to delete the selected members?
 send_mail#:#Send Email to Participants
-assigned_users_s#:#The user was successfully added.
-assigned_users_p#:#The users were successfully added.
+assigned_users_s#:#The user was successfully assigned.
+assigned_users_p#:#The users were successfully assigned.
 il_xgdo_writer#:#Writer
 il_xgdo_reader#:#Reader
 il_xgdo#:#Google Docs
@@ -75,3 +75,5 @@ joined_successfully#:#You joined successfully.
 google_account_participant_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>
 google_account_participant_form_desc#:#This step only occurs once for this object. We need your Google account to automatically grant the required permissions for you to view/edit the document.
 google_account_participant_form_title#:#Submit Your Google Account
+no_users_assigned_p#:#Nobody of the selected users could be assigned.
+no_users_assigned_s#:#Could not assign the selected user.
