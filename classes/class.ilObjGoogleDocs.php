@@ -2,10 +2,10 @@
 /* Copyright (c) 1998-2012 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 require_once 'Services/Repository/classes/class.ilObjectPlugin.php';
-require_once dirname(__FILE__).'/../interfaces/interface.ilGoogleDocsConstants.php';
+require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants.php';
 
 /**
- * 
+ *
  */
 class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 {
@@ -28,7 +28,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 * @var array
 	 */
 	private $local_roles = array();
-	
+
 	/**
 	 * @param int $ref_id
 	 */
@@ -56,7 +56,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		 * @var $role_obj ilObjRole
 		 */
 		$role_obj = $rolf_obj->createRole('il_xgdo_reader_' . $this->getRefId(), 'Reader of google docs object obj_no.' . $this->getId());
-		$query = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+		$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
 
 		$row = $ilDB->fetchAssoc(
 			$ilDB->queryF(
@@ -71,7 +71,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 
 		$role_obj = $rolf_obj->createRole('il_xgdo_writer_' . $this->getRefId(), 'Writer of google docs object obj_no.' . $this->getId());
-		$query = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+		$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
 
 		$row = $ilDB->fetchAssoc(
 			$ilDB->queryF(
@@ -88,66 +88,14 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param array $a_user_ids
-	 * @param int $a_type
-	 * @return bool
-	 * @throws InvalidArgumentException
-	 */
-	public function addParticipants(array $a_user_ids, $a_type)
-	{
-		/**
-		 * @var $rbacadmin ilRbacAdmin
-		 */
-		global $rbacadmin;
-
-		foreach((array) $a_user_ids as $user_id)
-		{
-			switch($a_type)
-			{
-				case self::GDOC_WRITER:
-					$writer = $this->getDefaultWriterRole();
-					if($writer)
-					{
-						$rbacadmin->assignUser(
-							$writer,
-							$user_id
-						);
-						// @todo: Add writer permission via api
-					}
-					break;
-
-				case self::GDOC_READER:
-					$reader = $this->getDefaultReaderRole();
-					if($reader)
-					{
-						$rbacadmin->assignUser(
-							$reader,
-							$user_id
-						);
-						// @todo: Add reader permission via api
-					}
-					break;
-
-				default:
-					throw new InvalidArgumentException(
-						'Invalid role type given'
-					);
-					break;
-			}
-		}
-
-		return true;
-	}
-
-	/**
 	 * @return int
 	 */
 	public function getDefaultWriterRole()
 	{
 		$local_roles = $this->getLocalRoles();
-		if(isset($local_roles['il_xgdo_writer_'.$this->getRefId()]))
+		if(isset($local_roles['il_xgdo_writer_' . $this->getRefId()]))
 		{
-			return $local_roles['il_xgdo_writer_'.$this->getRefId()];
+			return $local_roles['il_xgdo_writer_' . $this->getRefId()];
 		}
 
 		return 0;
@@ -159,9 +107,9 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function getDefaultReaderRole()
 	{
 		$local_roles = $this->getLocalRoles();
-		if(isset($local_roles['il_xgdo_reader_'.$this->getRefId()]))
+		if(isset($local_roles['il_xgdo_reader_' . $this->getRefId()]))
 		{
-			return $local_roles['il_xgdo_reader_'.$this->getRefId()];
+			return $local_roles['il_xgdo_reader_' . $this->getRefId()];
 		}
 
 		return 0;
@@ -195,9 +143,9 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 		return $this->local_roles;
 	}
-	
+
 	/**
- 	 *
+	 *
 	 */
 	protected function initType()
 	{
@@ -262,7 +210,8 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 			self::GOOGLE_DOC,
 			self::GOOGLE_XLS,
 			self::GOOGLE_PPT
-		)))
+		))
+		)
 		{
 			throw new ilException(self::CREATION_ERROR_TYPE_MISMATCH);
 		}
@@ -286,9 +235,9 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 		try
 		{
-			$api      = ilGoogleDocsAPI::getInstance();
-			$doc_id   = $api->createDocumentByType($this->getTitle(), $this->getDocType());
-			$document = $api->docs->getDocumentListEntry($doc_id->getText());
+			$api          = ilGoogleDocsAPI::getInstance();
+			$doc_id       = $api->createDocumentByType($this->getTitle(), $this->getDocType());
+			$document     = $api->docs->getDocumentListEntry($doc_id->getText());
 			$edit_doc_url = '';
 			foreach($document->getLink() as $link)
 			{
@@ -301,26 +250,18 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 					$edit_doc_url = $link->getHref();
 				}
 			}
+			$this->setDocUrl($doc_id);
+			$this->setEditDocUrl($edit_doc_url);
 
 			$ilDB->insert(
 				'rep_robj_xgdo_data',
 				array(
 					'obj_id'       => array('integer', $this->getId()),
 					'doc_type'     => array('integer', $this->getDocType()),
-					'doc_url'      => array('text', $doc_id),
-					'edit_doc_url' => array('text', $edit_doc_url)
+					'doc_url'      => array('text', $this->getDocUrl()),
+					'edit_doc_url' => array('text', $this->getEditDocUrl())
 				)
 			);
-
-			$role = new Zend_Gdata_Acl_Role();
-			$role->setValue('writer');
-			$scope = new Zend_Gdata_Acl_Scope();
-			$scope->setValue(ilUtil::stripSlashes($_POST['google_account']));
-			$scope->setType('user');
-			$acl_entry = new Zend_Gdata_Docs_AclEntry();
-			$acl_entry->setAclRole($role);
-			$acl_entry->setAclScope($scope);
-			$api->getDocs()->insertAcl($acl_entry, $document);
 		}
 		catch(Exception $e)
 		{
@@ -392,6 +333,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		}
 
 		$ilDB->manipulate('DELETE FROM rep_robj_xgdo_data WHERE obj_id = ' . $ilDB->quote($this->getId(), 'integer'));
+		$ilDB->manipulate('DELETE FROM rep_robj_xgdo_members WHERE obj_id = ' . $ilDB->quote($this->getId(), 'integer'));
 
 		include_once 'Services/Export/classes/class.ilExport.php';
 		include_once 'Services/Export/classes/class.ilExportFileInfo.php';
@@ -419,17 +361,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	{
 		$api = ilGoogleDocsAPI::getInstance();
 
-		// ILIAS can only handle a file extension length of 3 characters
-		/*if('jpg' == $type)
-		{
-			$type = 'jpeg';
-		}*/
-
 		switch($this->getDocType())
 		{
 			case self::GOOGLE_DOC:
 				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
-				$id = preg_replace('/(.*document%3A)/', '', $document->getId());
+				$id       = preg_replace('/(.*document%3A)/', '', $document->getId());
 				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/documents/Export?docID={$id}&exportFormat={$type}&format={$type}");
 				break;
 
@@ -439,15 +375,135 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 			case self::GOOGLE_PPT:
 				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
-				$id = preg_replace('/(.*presentation%3A)/', '', $document->getId());
+				$id       = preg_replace('/(.*presentation%3A)/', '', $document->getId());
 				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/presentations/Export?docID={$id}&exportFormat={$type}");
 				break;
-			
+
 			default:
 				throw new InvalidArgumentException("Document type {$this->getDocType()} not supported");
 				break;
 		}
 
 		return $response;
+	}
+
+	/**
+	 * @param ilGoogleDocsParticipant $participant
+	 * @return bool
+	 */
+	public function hasToSubmitGoogleAccount(ilGoogleDocsParticipant $participant)
+	{
+		return $participant->isAssigned() && !$participant->hasGoogleAccount();
+	}
+
+	/**
+	 * @param ilGoogleDocsParticipant $participant
+	 */
+	public function grantAclPermissions(ilGoogleDocsParticipant $participant)
+	{
+		$api      = ilGoogleDocsAPI::getInstance();
+		$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
+		$feed     = $api->getDocs()->getAclFeed($document);
+		$role     = null;
+		foreach($feed->getEntry() as $entry)
+		{
+			/**
+			 * @var $entry Zend_Gdata_Docs_AclEntry
+			 */
+			$scope = $entry->getAclScope();
+			if('user' == $scope->getType() &&
+				$participant->getGoogleAccount() == $scope->getValue() ||
+				str_replace('@gmail.com', '@googlemail.com', $participant->getGoogleAccount()) == $scope->getValue()
+			)
+			{
+				$role = $entry->getAclRole();
+				break;
+			}
+		}
+
+		$role_value = '';
+		if($role instanceof Zend_Gdata_Acl_Role)
+		{
+			$role_value = $role->getValue();
+		}
+
+		switch(true)
+		{
+			case $participant->isWriter() && !strlen($role_value):
+				$this->addAclEntry($participant, $document, self::GDOC_WRITER);
+				break;
+
+			case $participant->isWriter() && !in_array($role_value, array('owner', 'writer')):
+				$this->updateAclEntry($participant, $document, self::GDOC_WRITER);
+				break;
+
+			case $participant->isReader() && !strlen($role_value):
+				$this->addAclEntry($participant, $document, self::GDOC_READER);
+				break;
+
+			case $participant->isReader() && !in_array($role_value, array('reader')):
+				$this->updateAclEntry($participant, $document, self::GDOC_READER);
+				break;
+		}
+	}
+
+	/**
+	 * @param ilGoogleDocsParticipant           $participant
+	 * @param Zend_Gdata_Docs_DocumentListEntry $document
+	 * @param int                               $type
+	 * @throws InvalidArgumentException
+	 */
+	public function addAclEntry(ilGoogleDocsParticipant $participant, Zend_Gdata_Docs_DocumentListEntry $document, $type)
+	{
+		$api = ilGoogleDocsAPI::getInstance();
+
+		$role = new Zend_Gdata_Acl_Role();
+		switch($type)
+		{
+			case self::GDOC_WRITER:
+				$role->setValue('writer');
+				break;
+
+			case self::GDOC_READER:
+				$role->setValue('reader');
+				break;
+
+			default:
+				throw new InvalidArgumentException("Role {$type} is currently not supported for the google docs acl list");
+				break;
+		}
+
+		$scope = new Zend_Gdata_Acl_Scope();
+		$scope->setValue($participant->getGoogleAccount());
+		$scope->setType('user');
+		$acl_entry = new Zend_Gdata_Docs_AclEntry();
+		$acl_entry->setAclRole($role);
+		$acl_entry->setAclScope($scope);
+		$api->getDocs()->insertAcl($acl_entry, $document);
+	}
+
+	/**
+	 * @param ilGoogleDocsParticipant           $participant
+	 * @param Zend_Gdata_Docs_DocumentListEntry $document
+	 * @param int                               $type
+	 * @throws InvalidArgumentException
+	 */
+	public function updateAclEntry(ilGoogleDocsParticipant $participant, Zend_Gdata_Docs_DocumentListEntry $document, $type)
+	{
+		$api = ilGoogleDocsAPI::getInstance();
+		switch($type)
+		{
+			case self::GDOC_WRITER:
+				$api->getDocs()->updateAcl($document, $participant->getGoogleAccount(), 'writer');
+				break;
+
+			case self::GDOC_READER:
+				$api->getDocs()->updateAcl($document, $participant->getGoogleAccount(), 'reader');
+				break;
+
+			default:
+				throw new InvalidArgumentException("Role {$type} is currently not supported for the google docs acl list");
+				break;
+		}
 	}
 }

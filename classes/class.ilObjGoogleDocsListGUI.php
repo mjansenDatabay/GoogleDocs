@@ -57,8 +57,9 @@ class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 	{
 		/**
 		 * @var $ilUser ilObjUser
+		 * @var $lng ilLanguage
 		 */
-		global $ilUser;
+		global $ilUser, $lng;
 
 		$this->plugin->includeClass('class.ilObjGoogleDocsAccess.php');
 
@@ -68,6 +69,7 @@ class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 			!ilObjGoogleDocsAccess::_hasWriterRole($ilUser->getId(), $this->ref_id)
 		)
 		{
+
 			/**
 			 * $this->commands is initialized only once. appending the join-button
 			 * at this point will produce N buttons for the Nth item
@@ -79,7 +81,7 @@ class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 						array(
 							'permission' => 'visible',
 							'cmd'        => 'join',
-							'txt'        => $this->txt('join'),
+							'txt'        => $lng->txt('join'),
 							'default'    => false
 						)
 					)

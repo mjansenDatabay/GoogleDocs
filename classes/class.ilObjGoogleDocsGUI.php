@@ -4,7 +4,9 @@
 require_once 'Services/Repository/classes/class.ilObjectPluginGUI.php';
 require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
 require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants.php';
-require_once dirname(__FILE__) . '/../classes/class.ilGoogleDocsParticipantsTableGUI.php';
+require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipantsTableGUI.php';
+require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipant.php';
+require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipants.php';
 require_once 'Services/PersonalDesktop/interfaces/interface.ilDesktopItemHandling.php';
 
 /**
@@ -17,12 +19,17 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	 * @var ilObjGoogleDocs
 	 */
 	public $object = null;
-	
-	
+
+
 	/**
 	 * @var ilPropertyFormGUI
 	 */
 	protected $form;
+
+	/**
+	 * @var ilPropertyFormGUI
+	 */
+	protected $google_account_form;
 
 	/**
 	 * @return string
@@ -127,6 +134,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 					case 'redrawHeaderAction':
 					case 'addToDesk':
+					case 'saveGoogleAccount':
 					case 'removeFromDesk':
 					case 'showParticipantsGallery':
 					case 'showContent':
@@ -137,7 +145,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						$this->checkPermission('read');
 						$this->$cmd();
 						break;
-					
+
 					default:
 						if(!method_exists($this, $cmd))
 						{
@@ -152,15 +160,16 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public function join()
 	{
 		/**
 		 * @var $ilCtrl ilCtrl
-		 * @var $ilUser ilObjUser 
+		 * @var $ilUser ilObjUser
+		 * @var $ilLog  ilLog
 		 */
-		global $ilCtrl, $ilUser;
+		global $ilCtrl, $ilUser, $ilLog;
 
 		if(
 			ilObjGoogleDocsAccess::_hasReaderRole($ilUser->getId(), $this->ref_id)
@@ -174,12 +183,14 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		try
 		{
-			// @todo: Check already assigned members, if no user has to be assigned, send a failure message
-			$this->object->addParticipants(array($ilUser->getId()), self::GDOC_READER);
-			ilObjUser::_addDesktopItem($ilUser->getId(), $this->object->getRefId(), 'xgdo');
+			$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
+			$participant->add(self::GDOC_READER);
 		}
 		catch(Exception $e)
 		{
+			//@todo: Handle Exception
+			$ilLog->write($e->getMessage());
+			$ilLog->logStack();
 			ilUtil::sendFailure($e->getMessage(), true);
 			$ilCtrl->redirect($this, 'infoScreen');
 		}
@@ -336,7 +347,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 
 		// @todo: Implement export for spreadsheets
-		if($this->object->getDocType() != self::GOOGLE_XLS && $ilAccess->checkAccess('write','',$this->object->getRefId()))
+		if($this->object->getDocType() != self::GOOGLE_XLS && $ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
 			$ilTabs->addTarget(
 				'export',
@@ -408,13 +419,67 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$radio_doctype->setValue(self::GOOGLE_DOC);
 
 		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
-		$google_account->setInfo($this->plugin->txt('google_account_info'));
+		$google_account->setInfo($this->plugin->txt('google_account_owner_info'));
 		$google_account->setRequired(true);
 
 		$form->addItem($radio_doctype);
 		$form->addItem($google_account);
 
 		return $form;
+	}
+
+	/**
+	 * @return ilPropertyFormGUI
+	 */
+	protected function getGoogleAccountInputForm()
+	{
+		/**
+		 * @var $ilCtrl ilCtrl
+		 */
+		global $ilCtrl;
+
+		if($this->google_account_form instanceof ilPropertyFormGUI)
+		{
+			return $this->google_account_form;
+		}
+
+		$this->google_account_form = new ilPropertyFormGUI();
+		$this->google_account_form->setTitle($this->plugin->txt('google_account_participant_form_title'));
+		$this->google_account_form->setDescription($this->plugin->txt('google_account_participant_form_desc'));
+		$this->google_account_form->setFormAction($ilCtrl->getFormAction($this, 'saveGoogleAccount'));
+
+		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
+		$google_account->setInfo($this->plugin->txt('google_account_participant_info'));
+		$google_account->setRequired(true);
+
+		$this->google_account_form->addItem($google_account);
+
+		$this->google_account_form->addCommandButton('saveGoogleAccount', $this->txt('save'));
+
+		return $this->google_account_form;
+	}
+
+	protected function saveGoogleAccount()
+	{
+		/**
+		 * @var $tpl    ilTemplate
+		 * @var $lng    ilLanguage
+		 * @var $ilCtrl ilCtrl
+		 * @var $ilUser ilObjUser
+		 */
+		global $tpl, $lng, $ilCtrl, $ilUser;
+
+		$form = $this->getGoogleAccountInputForm();
+		if($form->checkInput())
+		{
+			$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
+			$participant->updateGoogleAccount($form->getInput('google_account'));
+			ilUtil::sendSuccess($lng->txt('saved_successfully'), true);
+			$ilCtrl->redirect($this, 'showContent');
+		}
+
+		$form->setValuesByPost();
+		$tpl->setContent($form->getHTML());
 	}
 
 	/**
@@ -426,10 +491,10 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		 * @var $tpl    ilTemplate
 		 * @var $ilTabs ilTabsGUI
 		 * @var $lng    ilLanguage
+		 * @var $ilUser ilObjUser
+		 * @var $ilLog  ilLog
 		 */
-		global $tpl, $ilTabs, $lng;
-
-		$this->plugin->includeClass('class.ilGoogleDocsAPI.php');
+		global $tpl, $ilTabs, $lng, $ilUser, $ilLog;
 
 		$ilTabs->activateTab('content');
 
@@ -440,28 +505,39 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/jquery-ui-1.9.0.custom.min.css");
 		$tpl->addCss("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.css");
 
-		// @todo: Check whether the user is assigned to either a local reader or a local writer role. If we did no store the users' google account, yet, we have to force him to enter the account name
-		// ACL-Liste
-		//$response = $api->docs->get($document->getId().'/acl');
-		//echo(htmlspecialchars($response->getBody()));
+		$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
+		if($this->object->hasToSubmitGoogleAccount($participant))
+		{
+			$form = $this->getGoogleAccountInputForm();
+			$tpl->setContent($form->getHTML());
+		}
+		else if($participant->isAssigned())
+		{
+			try
+			{
+				$this->object->grantAclPermissions($participant);
+			}
+			catch(Exception $e)
+			{
+				//@todo: Handle Exception
+				$ilLog->write($e->getMessage());
+				$ilLog->logStack();
+				ilUtil::sendFailure($e->getMessage());
+			}
 
-		$form = new ilPropertyFormGUI();
+			$form = new ilPropertyFormGUI();
+			$url  = new ilCustomInputGUI($lng->txt('url'), 'edit_url');
+			$href = '<a href="' . $this->object->getEditDocUrl() . '" target="_blank" >' . $this->object->getEditDocUrl() . '</a>';
+			$url->setHtml($href);
+			$form->addItem($url);
+			$html = $form->getHTML();
+			$tpl->addJavaScript("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.js");
+			$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
+			$content_tpl->setVariable('URL', $this->object->getEditDocUrl());
 
-		$url  = new ilCustomInputGUI($lng->txt('url'), 'edit_url');
-		$href = '<a href="' . $this->object->getEditDocUrl() . '" target="_blank" >' . $this->object->getEditDocUrl() . '</a>';
-		$url->setHtml($href);
-
-		$form->addItem($url);
-
-		$html = $form->getHTML();
-
-		$tpl->addJavaScript("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.js");
-
-		$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
-		$content_tpl->setVariable('URL', $this->object->getEditDocUrl());
-
-		$tpl->setPermanentLink($this->object->getType(), $this->object->getRefId());
-		$tpl->setContent($html . $content_tpl->get());
+			$tpl->setPermanentLink($this->object->getType(), $this->object->getRefId());
+			$tpl->setContent($html . $content_tpl->get());
+		}
 	}
 
 	/**
@@ -580,7 +656,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		global $ilTabs, $tpl, $rbacreview, $ilUser;
 
 		$ilTabs->activateTab('members');
-		
+
 		$this->setSubTabs('members');
 
 		/**
@@ -733,21 +809,49 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 * @param array  $a_user_ids
-	 * @param string $a_type
+	 * @param array  $user_ids
+	 * @param string $type
 	 */
-	public function addParticipants(array $a_user_ids, $a_type)
+	public function addParticipants(array $user_ids, $type)
 	{
-		if(!$a_user_ids)
+		if(!$user_ids)
 		{
 			ilUtil::sendFailure($this->lng->txt('select_one'));
 			return;
 		}
-		
+
+		$added_users = array();
 		try
 		{
-			// @todo: Check already assigned members, if no user has to be assigned, send a failure message
-			$this->object->addParticipants($a_user_ids, $a_type);
+			$participants = ilGoogleDocsParticipants::getInstanceByObjId($this->object->getId());
+			foreach((array)$user_ids as $usr_id)
+			{
+				if(!ilObjUser::_lookupLogin($usr_id))
+				{
+					continue;
+				}
+
+				switch($type)
+				{
+					case self::GDOC_WRITER:
+						if($participants->add($usr_id, self::GDOC_WRITER))
+						{
+							$added_users[] = $usr_id;
+						}
+						break;
+
+					case self::GDOC_READER:
+						if($participants->add($usr_id, self::GDOC_READER))
+						{
+							$added_users[] = $usr_id;
+						}
+						break;
+
+					default:
+						throw new InvalidArgumentException("Invalid role type {$type} given");
+						break;
+				}
+			}
 		}
 		catch(Exception $e)
 		{
@@ -755,7 +859,11 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			return false;
 		}
 
-		ilUtil::sendSuccess($this->plugin->txt('assigned_users'.(count($a_user_ids) == 1 ? '_s' : '_p')), true);
+		if($added_users)
+		{
+			ilUtil::sendSuccess($this->plugin->txt('assigned_users' . (count($added_users) == 1 ? '_s' : '_p')), true);
+		}
+
 		$this->ctrl->redirect($this, 'editParticipants');
 	}
 
@@ -764,11 +872,6 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	 */
 	protected function deleteParticipants()
 	{
-		/**
-		 * @var $rbacadmin ilRbacAdmin
-		 */
-		global $rbacadmin;
-
 		if(!isset($_POST['participants']) || !is_array($_POST['participants']) || !count($_POST['participants']))
 		{
 			ilUtil::sendFailure($this->lng->txt('select_one'));
@@ -776,14 +879,19 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			return;
 		}
 
+		$participants = ilGoogleDocsParticipants::getInstanceByObjId($this->object->getId());
 		foreach((array)$_POST['participants'] as $usr_id)
 		{
-			$rbacadmin->deassignUser($this->object->getDefaultReaderRole(), $usr_id);
-			$rbacadmin->deassignUser($this->object->getDefaultWriterRole(), $usr_id);
-			// @todo: Revoke permission via api
+			try
+			{
+				$participants->delete($usr_id);
+			}
+			catch(Exception $e)
+			{
+			}
 		}
 
-		ilUtil::sendSuccess($this->plugin->txt('participants_removed'.(count($_POST['participants']) == 1 ? '_s' : '_p')));
+		ilUtil::sendSuccess($this->plugin->txt('participants_removed' . (count($_POST['participants']) == 1 ? '_s' : '_p')));
 		$this->editParticipants();
 	}
 
@@ -831,7 +939,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			);
 		}
 
-		$confirmation_gui->setHeaderText($this->plugin->txt('remove_participants_info'.(count($participants_to_delete) == 1 ? '_s' : '_p')));
+		$confirmation_gui->setHeaderText($this->plugin->txt('remove_participants_info' . (count($participants_to_delete) == 1 ? '_s' : '_p')));
 
 		$tpl->setContent($confirmation_gui->getHTML());
 	}
@@ -867,7 +975,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			ilUtil::sendFailure($this->lng->txt('select_one'));
 			$this->editParticipants();
 		}
-		
+
 		require_once 'Services/Mail/classes/class.ilMailFormCall.php';
 		ilUtil::redirect(
 			ilMailFormCall::getRedirectTarget(
@@ -883,7 +991,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	protected function showParticipantsGallery()
 	{
@@ -896,7 +1004,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		global $ilTabs, $tpl, $rbacreview, $ilUser;
 
 		$ilTabs->activateTab('members');
-		
+
 		$this->setSubTabs('members');
 
 		/**
@@ -921,7 +1029,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			array(),
 			array_unique(array_merge($rbacreview->assignedUsers($this->object->getDefaultReaderRole()), $rbacreview->assignedUsers($this->object->getDefaultWriterRole())))
 		);
-		
+
 		if(count($usr_data['set']))
 		{
 			foreach($usr_data['set'] as $member)
@@ -938,8 +1046,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				{
 					continue;
 				}
-				
-				
+
 				$pp = $user->getPref('public_profile') == 'g' || ($user->getPref('public_profile') == 'y' && $ilUser->getId() != ANONYMOUS_USER_ID);
 				$this->ctrl->setParameterByClass('ilpublicuserprofilegui', 'user', $user->getId());
 				$profile_target = $this->ctrl->getLinkTargetByClass('ilpublicuserprofilegui', 'getHTML');
@@ -957,7 +1064,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 					$participants_tpl->setVariable('NAME', ilUserUtil::getNamePresentation($user->getId()));
 					$participants_tpl->parseCurrentBlock();
 				}
-				
+
 				$participants_tpl->setCurrentBlock('members');
 				if($pp && $user->getPref('public_upload') == 'y')
 				{
@@ -966,7 +1073,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$participants_tpl->parseCurrentBlock();
 			}
 		}
-		
+
 		$tpl->setContent($participants_tpl->get());
 	}
 
@@ -1008,17 +1115,31 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		/**
 		 * @var $ilUser ilObjUser
+		 * @var $ilLog  ilLog
 		 */
-		global $ilUser;
+		global $ilUser, $ilLog;
 
-		$newObj->addParticipants(array($ilUser->getId()), self::GDOC_WRITER);
+		try
+		{
+			$participant = ilGoogleDocsParticipant::getInstanceByObjId($newObj->getId(), $ilUser->getId());
+			$participant->add(self::GDOC_WRITER);
+			$participant->updateGoogleAccount(ilUtil::stripSlashes($_POST['google_account']));
+			$newObj->grantAclPermissions($participant);
+		}
+		catch(Exception $e)
+		{
+			//@todo: Handle Exception
+			$ilLog->write($e->getMessage());
+			$ilLog->logStack();
+			ilUtil::sendFailure($e->getMessage(), true);
+		}
 
 		parent::afterSave($newObj);
 	}
 
 	/**
 	 * @param string $a_sub_type
-	 * @param int $a_sub_id
+	 * @param int    $a_sub_id
 	 * @return ilObjectListGUI|ilObjGoogleDocsListGUI
 	 */
 	protected function initHeaderAction($a_sub_type = null, $a_sub_id = null)
@@ -1047,7 +1168,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		/**
 		 * @var $ilSetting ilSetting
-		 * @var $lng ilLanguage
+		 * @var $lng       ilLanguage
 		 */
 		global $ilSetting, $lng;
 

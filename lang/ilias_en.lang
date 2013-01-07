@@ -44,7 +44,7 @@ writers#:#Writers (May write)
 participants#:#Participants
 search_users#:#Search Users
 google_account#:#Your Google Account
-google_account_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>
+google_account_owner_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>
 participants_removed_s#:#The member was successfully deleted.
 participants_removed_p#:#The members were successfully deleted.
 remove_participants_info_s#:#Do you really want to delete the selected member?
@@ -72,3 +72,6 @@ exp_png#:#PNG
 exp_jpeg#:#JPEG
 join#:#Join
 joined_successfully#:#You joined successfully.
+google_account_participant_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>
+google_account_participant_form_desc#:#This step only occurs once for this object. We need your Google account to automatically grant the required permissions for you to view/edit the document.
+google_account_participant_form_title#:#Submit Your Google Account
