@@ -122,7 +122,6 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 						break;
 
 					case 'join':
-					case 'leave':
 						$this->checkPermission('visible');
 						$this->$cmd();
 
@@ -270,17 +269,23 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$exportgui->addFormat('html', $this->plugin->txt('exp_html'), $this, 'exportToHtml');
 				$exportgui->addFormat('odt', $this->plugin->txt('exp_odt'), $this, 'exportToOdt');
 				$exportgui->addFormat('docx', $this->plugin->txt('exp_docx'), $this, 'exportToDocx');
+				$exportgui->addFormat('doc', $this->plugin->txt('exp_doc'), $this, 'exportToDoc');
 				$exportgui->addFormat('rtf', $this->plugin->txt('exp_rtf'), $this, 'exportToRtf');
 				$exportgui->addFormat('txt', $this->plugin->txt('exp_txt'), $this, 'exportToTxt');
+				$exportgui->addFormat('zip', $this->plugin->txt('exp_zip'), $this, 'exportToZip');
+				$exportgui->addFormat('png', $this->plugin->txt('exp_png'), $this, 'exportToPng');
 				break;
 
 			// @todo: Implement export for spreadsheets
-			/*
-			case self::GOOGLE_XLS:
-				$exportgui->addFormat('ods', '', $this, 'exportToOds');
-				$exportgui->addFormat('xlsx', '', $this, 'exportToXlsx');
-				break;
-			*/
+			/*case self::GOOGLE_XLS:
+				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
+				$exportgui->addFormat('ods', $this->plugin->txt('exp_ods'), $this, 'exportToOds');
+				$exportgui->addFormat('xlsx', $this->plugin->txt('exp_xlsx'), $this, 'exportToXlsx');
+				$exportgui->addFormat('xls', $this->plugin->txt('exp_xls'), $this, 'exportToXls');
+				$exportgui->addFormat('csv', $this->plugin->txt('exp_csv'), $this, 'exportToCsv');
+				$exportgui->addFormat('tsv', $this->plugin->txt('exp_tsv'), $this, 'exportToTsv');
+				$exportgui->addFormat('html', $this->plugin->txt('exp_html'), $this, 'exportToHtml');
+				break;*/
 
 			case self::GOOGLE_PPT:
 				$exportgui->addFormat('txt', $this->plugin->txt('exp_txt'), $this, 'exportToTxt');
@@ -288,7 +293,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
 				$exportgui->addFormat('pptx', $this->plugin->txt('exp_pptx'), $this, 'exportToPptx');
 				$exportgui->addFormat('png', $this->plugin->txt('exp_png'), $this, 'exportToPng');
-				$exportgui->addFormat('jpg', $this->plugin->txt('exp_jpg'), $this, 'exportToJpg');
+				$exportgui->addFormat('jpeg', $this->plugin->txt('exp_jpeg'), $this, 'exportToJpeg');
 				break;
 
 			default:

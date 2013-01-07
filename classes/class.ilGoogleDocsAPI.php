@@ -34,7 +34,7 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	public $client = null;
 
 	/**
-	 * @var Zend_Gdata_Docs
+	 * @var Zend_Gdata_Docs|Zend_Gdata_Spreadsheets
 	 */
 	public $docs = null;
 
@@ -70,15 +70,15 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param Zend_Gdata_Docs $docs
+	 * @param Zend_Gdata_Docs $docs|Zend_Gdata_Spreadsheets
 	 */
-	public function setDocs(Zend_Gdata_Docs $docs)
+	public function setDocs(Zend_Gdata $docs)
 	{
 		$this->docs = $docs;
 	}
 
 	/**
-	 * @return Zend_Gdata_Docs
+	 * @return Zend_Gdata_Docs|Zend_Gdata_Spreadsheets
 	 */
 	public function getDocs()
 	{

@@ -418,30 +418,29 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function getExportData($type)
 	{
 		$api = ilGoogleDocsAPI::getInstance();
-		$document = $api->docs->getDocumentListEntry($this->getDocUrl());
 
-		if('jpg' == $type)
+		// ILIAS can only handle a file extension length of 3 characters
+		/*if('jpg' == $type)
 		{
 			$type = 'jpeg';
-		}
+		}*/
 
 		switch($this->getDocType())
 		{
 			case self::GOOGLE_DOC:
+				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
 				$id = preg_replace('/(.*document%3A)/', '', $document->getId());
-				$response = $api->docs->get("https://docs.google.com/feeds/download/documents/export/Export?id={$id}&format={$type}");
+				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/documents/Export?docID={$id}&exportFormat={$type}&format={$type}");
 				break;
 
-			case self::GOOGLE_XLS:
-				$id = preg_replace('/(.*spreadsheet%3A)/', '', $document->getId());
-
-				// @todo: Implement export for spreadsheets
-				throw new InvalidArgumentException("Export type {$type} for spreadsheet not supported");
-				break;
+			// @todo: Implement export for spreadsheets
+			/*case self::GOOGLE_XLS:
+				break;*/
 
 			case self::GOOGLE_PPT:
+				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
 				$id = preg_replace('/(.*presentation%3A)/', '', $document->getId());
-				$response = $api->docs->get("https://docs.google.com/presentation/d/{$id}/export/{$type}?id={$id}");
+				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/presentations/Export?docID={$id}&exportFormat={$type}");
 				break;
 			
 			default:
