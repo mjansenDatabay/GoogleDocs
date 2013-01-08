@@ -247,7 +247,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 					$target = ilUtil::ilTempnam();
 					if(!ilUtil::moveUploadedFile($_FILES['gdocs_file']['tmp_name'], $_FILES['gdocs_file']['name'], $target, false))
 					{
-						throw new Exception();
+						throw new Exception('Could not move uploaded file ' . $_FILES['gdocs_file']['name'] . ' (' . $_FILES['gdocs_file']['tmp_name'] . ') to target ' . $target);
 					}
 					$document     = $api->createDocumentByFile($this->getTitle(), $target, $_FILES['gdocs_file']['type']);
 					$edit_doc_url = $this->getDocumentEditUrl($document);
