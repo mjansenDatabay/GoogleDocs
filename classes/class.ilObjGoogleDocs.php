@@ -227,30 +227,40 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		/**
 		 * @var $ilDB   ilDB
 		 * @var $ilLog  ilLog
-		 * @var $ilUser ilObjUser
 		 */
-		global $ilDB, $ilLog, $ilUser;
+		global $ilDB, $ilLog;
 
-		$this->setDocType((int)$_POST['doc_type']);
+		$target = '';
 
 		try
 		{
-			$api          = ilGoogleDocsAPI::getInstance();
-			$doc_id       = $api->createDocumentByType($this->getTitle(), $this->getDocType());
-			$document     = $api->getDocumentService()->getDocumentListEntry($doc_id->getText());
-			$edit_doc_url = '';
-			foreach($document->getLink() as $link)
+			$api = ilGoogleDocsAPI::getInstance();
+			switch((int)$_POST['creation_type'])
 			{
-				/**
-				 * @var $link Zend_Gdata_App_Extension_link
-				 */
+				case self::CREATION_TYPE_NEW:
+					$this->setDocType((int)$_POST['doc_type']);
+					$document     = $api->createDocumentByType($this->getTitle(), $this->getDocType());
+					$edit_doc_url = $this->getDocumentEditUrl($document);
+					break;
 
-				if($link->getRel() == 'alternate')
-				{
-					$edit_doc_url = $link->getHref();
-				}
+				case self::CREATION_TYPE_UPLOAD:
+					$target = ilUtil::ilTempnam();
+					if(!ilUtil::moveUploadedFile($_FILES['gdocs_file']['tmp_name'], $_FILES['gdocs_file']['name'], $target, false))
+					{
+						throw new Exception();
+					}
+					$document     = $api->createDocumentByFile($this->getTitle(), $target, $_FILES['gdocs_file']['type']);
+					$edit_doc_url = $this->getDocumentEditUrl($document);
+					$this->setDocType(ilGoogleDocsAPI::getIliasTypeByGoogleEditUrl($edit_doc_url));
+					@unlink($target);
+					break;
+
+				default:
+					throw new ilException(self::CREATION_ERROR_TYPE_UPLOAD);
+					break;
 			}
-			$this->setDocUrl($doc_id);
+
+			$this->setDocUrl($document->getId());
 			$this->setEditDocUrl($edit_doc_url);
 
 			$ilDB->insert(
@@ -265,6 +275,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		}
 		catch(Exception $e)
 		{
+			if(self::CREATION_TYPE_UPLOAD == (int)$_POST['creation_type'] && strlen($target))
+			{
+				@unlink($target);
+			}
+
 			$ilLog->write($e->getMessage());
 			$ilLog->logStack();
 
@@ -272,6 +287,29 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 			throw new ilException(self::CREATION_ERROR_INCOMPLETE);
 		}
+	}
+
+	/**
+	 * @param Zend_Gdata_Docs_DocumentListEntry $document
+	 * @return string
+	 */
+	protected function getDocumentEditUrl(Zend_Gdata_Docs_DocumentListEntry $document)
+	{
+		$edit_doc_url = '';
+
+		foreach($document->getLink() as $link)
+		{
+			/**
+			 * @var $link Zend_Gdata_App_Extension_link
+			 */
+
+			if($link->getRel() == 'alternate')
+			{
+				$edit_doc_url = $link->getHref();
+			}
+		}
+
+		return $edit_doc_url;
 	}
 
 	/**
@@ -322,8 +360,11 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 		try
 		{
-			$api = ilGoogleDocsAPI::getInstance();
-			$api->deleteDocumentByUrl((string)$this->getDocUrl());
+			if(strlen($this->getDocUrl()))
+			{
+				$api = ilGoogleDocsAPI::getInstance();
+				$api->deleteDocumentByUrl((string)$this->getDocUrl());
+			}
 		}
 		catch(Exception $e)
 		{

@@ -404,23 +404,39 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		$form = parent::initCreateForm($type);
 
-		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('doctype'), 'doc_type');
-		$radio_doctype->setRequired(true);
-		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), self::DOC_TYPE_DOCUMENT);
-		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), self::DOC_TYPE_SPREADSHEET);
-		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), self::DOC_TYPE_PRESENTATION);
+		$creation_type = new ilRadioGroupInputGUI($this->plugin->txt('creation_type'), 'creation_type');
+		$creation_type->setRequired(true);
+		$creation_type->setValue(self::CREATION_TYPE_NEW);
+		$action_new    = new ilRadioOption($this->plugin->txt('creation_type_new'), self::CREATION_TYPE_NEW);
+		$action_upload = new ilRadioOption($this->plugin->txt('creation_type_upload'), self::CREATION_TYPE_UPLOAD);
+		$creation_type->addOption($action_new);
+		$creation_type->addOption($action_upload);
 
-		$radio_doctype->addOption($option_1);
-		$radio_doctype->addOption($option_2);
-		$radio_doctype->addOption($option_3);
+		$document_type = new ilRadioGroupInputGUI($this->plugin->txt('doctype'), 'doc_type');
+		$document_type->setRequired(true);
+		$document_type->setValue(self::DOC_TYPE_DOCUMENT);
+		$type_doc          = new ilRadioOption($this->plugin->txt('doctype_doc'), self::DOC_TYPE_DOCUMENT);
+		$type_spreadsheet  = new ilRadioOption($this->plugin->txt('doctype_xls'), self::DOC_TYPE_SPREADSHEET);
+		$type_presentation = new ilRadioOption($this->plugin->txt('doctype_ppt'), self::DOC_TYPE_PRESENTATION);
+		$document_type->addOption($type_doc);
+		$document_type->addOption($type_spreadsheet);
+		$document_type->addOption($type_presentation);
 
-		$radio_doctype->setValue(self::DOC_TYPE_DOCUMENT);
+		$upload_field = new ilFileInputGUI($this->plugin->txt('gdocs_file'), 'gdocs_file');
+		$class        = new ReflectionClass('Zend_Gdata_Docs');
+		$property     = $class->getProperty('SUPPORTED_FILETYPES');
+		$property->setAccessible(true);
+		$upload_field->setSuffixes(array_map('strtolower', array_keys($property->getValue())));
+		$upload_field->setRequired(true);
+		$action_upload->addSubItem($upload_field);
 
 		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_owner_info'));
 		$google_account->setRequired(true);
 
-		$form->addItem($radio_doctype);
+		$action_new->addSubItem($document_type);
+		
+		$form->addItem($creation_type);
 		$form->addItem($google_account);
 
 		return $form;
@@ -1115,7 +1131,10 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 		catch(Exception $e)
 		{
-			ilUtil::sendFailure($this->plugin->txt($e->getMessage()), true);
+			if($this->plugin->txt($e->getMessage()) != '-' . $e->getMessage() . '-')
+			{
+				ilUtil::sendFailure($this->plugin->txt($e->getMessage()), true);
+			}
 
 			$ilCtrl->setParameterByClass('ilrepositorygui', 'ref_id', (int)$_GET['ref_id']);
 			$ilCtrl->redirectByClass('ilrepositorygui');

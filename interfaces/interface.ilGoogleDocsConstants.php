@@ -54,5 +54,10 @@ interface ilGoogleDocsConstants
 	/**
 	 * @var string
 	 */
+	const CREATION_ERROR_TYPE_UPLOAD = 'err_cr_upload';
+
+	/**
+	 * @var string
+	 */
 	const ERROR_ACCOUNT_DATA = 'err_account_data';
 }

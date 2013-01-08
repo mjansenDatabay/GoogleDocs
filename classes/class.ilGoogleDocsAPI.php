@@ -327,6 +327,26 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
+	 * @param string $edit_doc_url
+	 * @return int
+	 */
+	public static function getIliasTypeByGoogleEditUrl($edit_doc_url)
+	{
+		if(preg_match('@/presentation/@', $edit_doc_url))
+		{
+			return self::DOC_TYPE_PRESENTATION;
+		}
+		else if(preg_match('@/spreadsheet/@', $edit_doc_url))
+		{
+			return self::DOC_TYPE_SPREADSHEET;
+		}
+		else
+		{
+			return self::DOC_TYPE_DOCUMENT;
+		}
+	}
+
+	/**
 	 * @param string   $login
 	 * @param string   $password
 	 * @return bool
@@ -445,7 +465,7 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	/**
 	 * @param string $title   string Name of the new file
 	 * @param string $type    integer Type of the file
-	 * @return mixed
+	 * @return Zend_Gdata_Docs_DocumentListEntry
 	 */
 	public function createDocumentByType($title, $type)
 	{
@@ -460,18 +480,18 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 			)
 		);
 		$entry->setTitle(new Zend_Gdata_App_Extension_Title($title, null));
-		$doc = $this->getDocumentService()->insertDocument($entry, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
-
-		return $doc->getId();
+		return $this->getDocumentService()->insertDocument($entry, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 	}
 
 	/**
+	 * @param string $title
 	 * @param string $path
+	 * @param string $mime_type
 	 * @return Zend_Gdata_Docs_DocumentListEntry
 	 */
-	public function createDocumentByFile($path)
+	public function createDocumentByFile($title, $path, $mime_type)
 	{
-		$this->getDocumentService()->uploadFile($path, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
+		return $this->getDocumentService()->uploadFile($path, $title, $mime_type, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 	}
 
 	/**

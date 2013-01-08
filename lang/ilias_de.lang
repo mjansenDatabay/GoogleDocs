@@ -82,3 +82,8 @@ google_account_participant_form_desc#:#Dieser Schritt findet für dieses Objekt 
 google_account_participant_form_title#:#Eingabe Ihres Google-Accounts
 no_users_assigned_p#:#Von den gewählten Benutzern konnte niemand als Teilnehmer hinzugefügt werden.
 no_users_assigned_s#:#Der gewählte Benutzer konnte nicht als Teilnehmer hinzugefügt werden.
+creation_type#:#Aktion
+creation_type_new#:#Neues Dokument erstellen
+creation_type_upload#:#Vorhandenes Dokument hochladen
+gdocs_file#:#Datei
+err_cr_upload#:#Die Datei konnte nicht als Google-Dokument hochgeladen werden.

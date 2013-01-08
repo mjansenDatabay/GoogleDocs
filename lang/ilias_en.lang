@@ -82,3 +82,8 @@ google_account_participant_form_desc#:#This step only occurs once for this objec
 google_account_participant_form_title#:#Submit Your Google Account
 no_users_assigned_p#:#Nobody of the selected users could be assigned.
 no_users_assigned_s#:#Could not assign the selected user.
+creation_type#:#Action
+creation_type_new#:#Create New Document
+creation_type_upload#:#Upload Existing Document
+gdocs_file#:#File
+err_cr_upload#:#ILIAS could not create a google document with the uploaded file.
