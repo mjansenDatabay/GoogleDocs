@@ -9,9 +9,9 @@ require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants
 class ilGoogleDocsAPI implements ilGoogleDocsConstants
 {
 	/**
-	 * @var ilGoogleDocsAPI
+	 * @var ilGoogleDocsAPI[]
 	 */
-	private static $instance;
+	private static $instances = array();
 
 	/**
 	 * @var string Google-Login
@@ -36,7 +36,7 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	/**
 	 * @var Zend_Gdata_Docs|Zend_Gdata_Spreadsheets
 	 */
-	public $docs = null;
+	public $document_service = null;
 
 	/**
 	 * @var bool
@@ -72,17 +72,17 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	/**
 	 * @param Zend_Gdata_Docs $docs|Zend_Gdata_Spreadsheets
 	 */
-	public function setDocs(Zend_Gdata $docs)
+	public function setDocumentService(Zend_Gdata $document_service)
 	{
-		$this->docs = $docs;
+		$this->document_service = $document_service;
 	}
 
 	/**
 	 * @return Zend_Gdata_Docs|Zend_Gdata_Spreadsheets
 	 */
-	public function getDocs()
+	public function getDocumentService()
 	{
-		return $this->docs;
+		return $this->document_service;
 	}
 
 	/**
@@ -134,7 +134,7 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param $login string
+	 * @param string $login
 	 */
 	public function setLogin($login)
 	{
@@ -159,9 +159,11 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 		return $this->password;
 	}
 
-	private function __construct()
+	/**
+	 *
+	 */
+	protected function __construct()
 	{
-
 		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
 		{
 			require_once 'Services/Http/classes/class.ilProxySettings.php';
@@ -185,19 +187,40 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	 */
 	public static function getInstance()
 	{
-		if(!self::$instance instanceof self)
-		{
-			self::$instance = new self;
-			self::$instance->connect();
-		}
-
-		return self::$instance;
+		return self::getInstanceByType(self::DOC_TYPE_DOCUMENT);
 	}
 
 	/**
-	 * @throws Exception
+	 * @param string $type
+	 * @return ilGoogleDocsAPI
+	 * @throws InvalidArgumentException
 	 */
-	private function connect()
+	public static function getInstanceByType($type)
+	{
+		if(!in_array($type, array(
+			self::DOC_TYPE_DOCUMENT,
+			self::DOC_TYPE_SPREADSHEET,
+			self::DOC_TYPE_PRESENTATION
+		))
+		)
+		{
+			throw new InvalidArgumentException("Document type {$type} currently not supported");
+		}
+
+		if(!self::$instances[$type] instanceof self)
+		{
+			self::$instances[$type] = new self($type);
+			self::$instances[$type]->connect($type);
+		}
+
+		return self::$instances[$type];
+	}
+
+	/**
+	 * @param int $type
+	 * @throws ilException
+	 */
+	protected function connect($type = self::DOC_TYPE_DOCUMENT)
 	{
 		if(!$this->readSettings())
 		{
@@ -213,28 +236,103 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 			);
 
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-			$client            = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME, $proxiedHttpClient);
-			$docs              = new Zend_Gdata_Docs($client);
+			$client            = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), self::getGoogleAuthServiceNameByIliasType($type), $proxiedHttpClient);
 			$this->setClient($client);
-			$this->setDocs($docs);
+			$this->setDocumentService(self::createGoogleDocumentServiceByIliasType($client, $type));
 		}
 		else
 		{
-			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-			$docs   = new Zend_Gdata_Docs($client);
+			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), self::getGoogleAuthServiceNameByIliasType($type));
 			$this->setClient($client);
-			$this->setDocs($docs);
+			$this->setDocumentService(self::createGoogleDocumentServiceByIliasType($client, $type));
 		}
 	}
 
 	/**
-	 * @param ilPlugin $pluginObj
-	 * @param string   $a_login
-	 * @param string   $a_password
+	 * @param Zend_Gdata_HttpClient $client
+	 * @param int                   $type
+	 * @return Zend_Gdata_Docs|Zend_Gdata_Spreadsheets
+	 * @throws InvalidArgumentException
+	 */
+	protected static function createGoogleDocumentServiceByIliasType(Zend_Gdata_HttpClient $client, $type)
+	{
+		if(self::DOC_TYPE_DOCUMENT == $type)
+		{
+			return new Zend_Gdata_Docs($client);
+		}
+		else if(self::DOC_TYPE_SPREADSHEET == $type)
+		{
+			return new Zend_Gdata_Spreadsheets($client);
+		}
+		else if(self::DOC_TYPE_PRESENTATION == $type)
+		{
+			return new Zend_Gdata_Docs($client);
+		}
+		else
+		{
+			throw new InvalidArgumentException("Document type {$type} is currently not supported");
+		}
+	}
+
+	/**
+	 * @param int $type
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	protected static function getGoogleAuthServiceNameByIliasType($type)
+	{
+		if(self::DOC_TYPE_DOCUMENT == $type)
+		{
+			return Zend_Gdata_Docs::AUTH_SERVICE_NAME;
+		}
+		else if(self::DOC_TYPE_SPREADSHEET == $type)
+		{
+			return Zend_Gdata_Spreadsheets::AUTH_SERVICE_NAME;
+		}
+		else if(self::DOC_TYPE_PRESENTATION == $type)
+		{
+			return Zend_Gdata_Docs::AUTH_SERVICE_NAME;
+		}
+		else
+		{
+			throw new InvalidArgumentException("Document type {$type} is currently not supported");
+		}
+	}
+
+	/**
+	 * @param int $type
+	 * @return string
+	 * @throws InvalidArgumentException
+	 */
+	protected static function getGoogleDocsTypeByIliasType($type)
+	{
+		if(self::DOC_TYPE_DOCUMENT == $type)
+		{
+			$document_type = 'document';
+		}
+		else if(self::DOC_TYPE_SPREADSHEET == $type)
+		{
+			$document_type = 'spreadsheet';
+		}
+		else if(self::DOC_TYPE_PRESENTATION == $type)
+		{
+			$document_type = 'presentation';
+		}
+		else
+		{
+			throw new InvalidArgumentException("Document type {$type} is currently not supported");
+		}
+
+		return $document_type;
+	}
+
+	/**
+	 * @param string   $login
+	 * @param string   $password
 	 * @return bool
 	 * @throws Exception
 	 */
-	public static function checkConnection(ilPlugin $pluginObj, $a_login, $a_password)
+	public static function checkConnection($login, $password)
 	{
 		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
 		{
@@ -254,18 +352,16 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 			);
 
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-			$client            = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME, $proxiedHttpClient);
-			$docs              = new Zend_Gdata_Docs($client);
+			$client            = Zend_Gdata_ClientLogin::getHttpClient($login, $password, self::getGoogleAuthServiceNameByIliasType(self::DOC_TYPE_DOCUMENT), $proxiedHttpClient);
+			$docs              = self::createGoogleDocumentServiceByIliasType($client, self::DOC_TYPE_DOCUMENT);
 			$docs->getDocumentListFeed();
 		}
 		else
 		{
-			$client = Zend_Gdata_ClientLogin::getHttpClient($a_login, $a_password, Zend_Gdata_Docs::AUTH_SERVICE_NAME);
-			$docs   = new Zend_Gdata_Docs($client);
+			$client = Zend_Gdata_ClientLogin::getHttpClient($login, $password, self::getGoogleAuthServiceNameByIliasType(self::DOC_TYPE_DOCUMENT));
+			$docs   = self::createGoogleDocumentServiceByIliasType($client, self::DOC_TYPE_DOCUMENT);
 			$docs->getDocumentListFeed();
 		}
-
-		return true;
 	}
 
 	/**
@@ -279,9 +375,7 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 		global $ilDB;
 
 		$res = $ilDB->queryF('
-			SELECT * FROM ' . $this->tbl_settings . ' 
-			WHERE keyword = %s
-			OR keyword = %s',
+			SELECT * FROM ' . $this->tbl_settings . ' WHERE keyword = %s OR keyword = %s',
 			array('text', 'text'),
 			array('login', 'password'));
 
@@ -303,10 +397,10 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param $a_keyword string
-	 * @param $a_value   string
+	 * @param string $keyword
+	 * @param string $value
 	 */
-	public static function setSetting($a_keyword, $a_value)
+	public static function setSetting($keyword, $value)
 	{
 		/**
 		 * @var $ilDB ilDB
@@ -315,22 +409,22 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 
 		$ilDB->manipulateF('
 			DELETE FROM rep_robj_xgdo_settings WHERE keyword = %s',
-			array('text'), array($a_keyword));
+			array('text'), array($keyword));
 
 		$ilDB->insert(
 			'rep_robj_xgdo_settings',
 			array(
-				'keyword' => array('text', $a_keyword),
-				'value'   => array('text', $a_value)
+				'keyword' => array('text', $keyword),
+				'value'   => array('text', $value)
 			)
 		);
 	}
 
 	/**
-	 * @param string $a_keyword
+	 * @param string $keyword
 	 * @return string|null
 	 */
-	public static function getSetting($a_keyword)
+	public static function getSetting($keyword)
 	{
 		/**
 		 * @var $ilDB ilDB
@@ -340,9 +434,8 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 		$res = $ilDB->queryF(
 			'SELECT value FROM rep_robj_xgdo_settings WHERE keyword = %s',
 			array('text'),
-			array($a_keyword)
+			array($keyword)
 		);
-
 		$row = $ilDB->fetchAssoc($res);
 
 		return $row['value'];
@@ -350,95 +443,69 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 
 
 	/**
-	 * @param string $a_title   string Name of the new file
-	 * @param string $a_type    integer Type of the file
+	 * @param string $title   string Name of the new file
+	 * @param string $type    integer Type of the file
 	 * @return mixed
 	 */
-	public function createDocumentByType($a_title, $a_type)
+	public function createDocumentByType($title, $type)
 	{
-		$data = new Zend_Gdata_Docs_DocumentListEntry();
+		$entry = new Zend_Gdata_Docs_DocumentListEntry();
 
-		if($a_type == self::GOOGLE_DOC)
-		{
-			$doctype = 'document';
-		}
-		else if($a_type == self::GOOGLE_XLS)
-		{
-			$doctype = 'spreadsheet';
-		}
-		else if($a_type == self::GOOGLE_PPT)
-		{
-			$doctype = 'presentation';
-		}
-
-		$data->setCategory(
+		$entry->setCategory(
 			array(
 				new Zend_Gdata_App_Extension_Category(
-					"http://schemas.google.com/docs/2007#" . $doctype,
+					"http://schemas.google.com/docs/2007#" . self::getGoogleDocsTypeByIliasType($type),
 					"http://schemas.google.com/g/2005#kind"
 				)
 			)
 		);
+		$entry->setTitle(new Zend_Gdata_App_Extension_Title($title, null));
+		$doc = $this->getDocumentService()->insertDocument($entry, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 
-		$data->setTitle(new Zend_Gdata_App_Extension_Title($a_title, null));
-
-// Add document to your list
-		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
-
-// Return document ID
 		return $doc->getId();
 	}
 
 	/**
-	 * @param string $a_doc_url
-	 * @param int $a_type
-	 * @param string $a_title
+	 * @param string $path
+	 * @return Zend_Gdata_Docs_DocumentListEntry
+	 */
+	public function createDocumentByFile($path)
+	{
+		$this->getDocumentService()->uploadFile($path, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
+	}
+
+	/**
+	 * @param string $url
+	 * @param int    $type
+	 * @param string $title
 	 * @return mixed
 	 */
-	public function copyDocument($a_doc_url, $a_type, $a_title)
+	public function copyDocument($url, $type, $title)
 	{
-// Create new document
-		$data = new Zend_Gdata_Docs_DocumentListEntry();
+		$entry = new Zend_Gdata_Docs_DocumentListEntry();
 
-		if($a_type == self::GOOGLE_DOC)
-		{
-			$doctype = 'document';
-		}
-		else if($a_type == self::GOOGLE_XLS)
-		{
-			$doctype = 'spreadsheet';
-		}
-		else if($a_type == self::GOOGLE_PPT)
-		{
-			$doctype = 'presentation';
-		}
-
-		$data->setCategory(
+		$entry->setCategory(
 			array(
 				new Zend_Gdata_App_Extension_Category(
-					"http://schemas.google.com/docs/2007#" . $doctype,
+					"http://schemas.google.com/docs/2007#" . self::getGoogleDocsTypeByIliasType($type),
 					"http://schemas.google.com/g/2005#kind"
 				)
-			));
+			)
+		);
+		$entry->setTitle(new Zend_Gdata_App_Extension_Title($title, null));
+		$entry->setId(new Zend_Gdata_App_Extension_Id($url));
+		$doc = $this->getDocumentService()->insertDocument($entry, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
 
-		$data->setTitle(new Zend_Gdata_App_Extension_Title($a_title, null));
-// Use this doc_id as copy source	
-		$data->setId(new Zend_Gdata_App_Extension_Id($a_doc_url));
-
-// Add document to your list
-		$doc = $this->docs->insertDocument($data, Zend_Gdata_Docs::DOCUMENTS_LIST_FEED_URI);
-//
-// Return document ID
 		return $doc->getId();
 
 	}
 
 	/**
-	 * @param $a_doc_url string i.e. "https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUy....."
+	 * @param string $url i.e. "https://docs.google.com/feeds/documents/private/full/document%3A1YrgFUy....."
 	 */
-	public function deleteDocumentByUrl($a_doc_url)
+	public function deleteDocumentByUrl($url)
 	{
-		$file = $this->docs->getDocumentListEntry($a_doc_url);
+		$file = $this->getDocumentService()->getDocumentListEntry($url);
 		$file->delete();
 	}
 }

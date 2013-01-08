@@ -104,7 +104,7 @@ class ilGoogleDocsParticipantsTableGUI extends ilTable2GUI implements ilGoogleDo
 		{
 			$this->tpl->setVariable('VAL_CHECKBOX', ilUtil::formCheckbox(false, 'readers[]', $data['usr_id']));
 		}
-		
+
 		$this->tpl->setVariable('VAL_NAME', ilUserUtil::getNamePresentation($data['usr_id']));
 
 		if(!$ilAccess->checkAccessOfUser($data['usr_id'], 'read', '', $this->getParentObject()->object->getRefId()) &&

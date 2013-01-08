@@ -2,24 +2,34 @@
 /* Copyright (c) 1998-2012 ILIAS open source, Extended GPL, see docs/LICENSE */
 
 /**
- * 
+ *
  */
 interface ilGoogleDocsConstants
 {
 	/**
 	 * @var int
 	 */
-	const GOOGLE_DOC = 1;
+	const CREATION_TYPE_NEW = 1;
 
 	/**
 	 * @var int
 	 */
-	const GOOGLE_XLS = 2;
+	const CREATION_TYPE_UPLOAD = 2;
 
 	/**
 	 * @var int
 	 */
-	const GOOGLE_PPT = 3;
+	const DOC_TYPE_DOCUMENT = 1;
+
+	/**
+	 * @var int
+	 */
+	const DOC_TYPE_SPREADSHEET = 2;
+
+	/**
+	 * @var int
+	 */
+	const DOC_TYPE_PRESENTATION = 3;
 
 	/**
 	 * @var int

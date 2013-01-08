@@ -292,7 +292,7 @@ class ilGoogleDocsParticipants implements ilGoogleDocsConstants
 	 * @param int $usr_id
 	 * @return bool
 	 */
-	public function hasParticipantGoogleAccountById($usr_id)
+	public function hasParticipantByIdGoogleAccount($usr_id)
 	{
 		return isset($this->participants_status[$usr_id]['google_account']) && strlen($this->participants_status[$usr_id]['google_account']);
 	}

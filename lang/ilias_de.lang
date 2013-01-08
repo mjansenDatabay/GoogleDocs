@@ -70,6 +70,11 @@ exp_svg#:#SVG
 exp_pptx#:#PPTX
 exp_png#:#PNG
 exp_jpeg#:#JPEG
+exp_csv#:#CSV
+exp_xls#:#XLS
+exp_xlsx#:#XLSX
+exp_tsv#:#TSV
+exp_ods#:#ODS
 join#:#Beitreten
 joined_successfully#:#Sie sind dem Objekt erfolgreich beigetreten.
 google_account_participant_info#:#Bitte tragen Sie hier Ihren Google-Account ein. <span style="font-weight:bold;color:red">Wichtig: Dieser Account muss bereits exisitieren, damit Sie die Berechtigung für das erstellte Dokument automatisch erhalten.</span>

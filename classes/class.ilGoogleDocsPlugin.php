@@ -51,7 +51,7 @@ class ilGoogleDocsPlugin extends ilRepositoryObjectPlugin
 	const PNAME = 'GoogleDocs';
 
 	/**
-	 * @var |null
+	 * @var ilGoogleDocsPlugin|null
 	 */
 	private static $instance = null;
 
@@ -60,11 +60,6 @@ class ilGoogleDocsPlugin extends ilRepositoryObjectPlugin
 	 */
 	public static function getInstance()
 	{
-		/**
-		 * @var $ilPluginAdmin ilPluginAdmin
-		 */
-		global $ilPluginAdmin;
-
 		if(null === self::$instance)
 		{
 			require_once 'Services/Component/classes/class.ilPluginAdmin.php';

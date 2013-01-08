@@ -70,6 +70,11 @@ exp_svg#:#SVG
 exp_pptx#:#PPTX
 exp_png#:#PNG
 exp_jpeg#:#JPEG
+exp_csv#:#CSV
+exp_xls#:#XLS
+exp_xlsx#:#XLSX
+exp_tsv#:#TSV
+exp_ods#:#ODS
 join#:#Join
 joined_successfully#:#You joined successfully.
 google_account_participant_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>

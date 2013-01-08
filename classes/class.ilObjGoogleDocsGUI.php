@@ -24,12 +24,12 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	/**
 	 * @var ilPropertyFormGUI
 	 */
-	protected $form;
+	protected $form = null;
 
 	/**
 	 * @var ilPropertyFormGUI
 	 */
-	protected $google_account_form;
+	protected $google_account_form = null;
 
 	/**
 	 * @return string
@@ -230,7 +230,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		try
 		{
-			$response = $this->object->getExportData($type);
+			$response = $this->object->getExportResponse($type);
 
 			include_once 'Services/Export/classes/class.ilExport.php';
 			ilExport::_createExportDirectory($this->object->getId(), $type, $this->object->getType());
@@ -275,7 +275,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		switch($this->object->getDocType())
 		{
-			case self::GOOGLE_DOC:
+			case self::DOC_TYPE_DOCUMENT:
 				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
 				$exportgui->addFormat('html', $this->plugin->txt('exp_html'), $this, 'exportToHtml');
 				$exportgui->addFormat('odt', $this->plugin->txt('exp_odt'), $this, 'exportToOdt');
@@ -287,8 +287,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$exportgui->addFormat('png', $this->plugin->txt('exp_png'), $this, 'exportToPng');
 				break;
 
-			// @todo: Implement export for spreadsheets
-			/*case self::GOOGLE_XLS:
+			case self::DOC_TYPE_SPREADSHEET:
 				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
 				$exportgui->addFormat('ods', $this->plugin->txt('exp_ods'), $this, 'exportToOds');
 				$exportgui->addFormat('xlsx', $this->plugin->txt('exp_xlsx'), $this, 'exportToXlsx');
@@ -296,9 +295,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$exportgui->addFormat('csv', $this->plugin->txt('exp_csv'), $this, 'exportToCsv');
 				$exportgui->addFormat('tsv', $this->plugin->txt('exp_tsv'), $this, 'exportToTsv');
 				$exportgui->addFormat('html', $this->plugin->txt('exp_html'), $this, 'exportToHtml');
-				break;*/
+				break;
 
-			case self::GOOGLE_PPT:
+			case self::DOC_TYPE_PRESENTATION:
 				$exportgui->addFormat('txt', $this->plugin->txt('exp_txt'), $this, 'exportToTxt');
 				$exportgui->addFormat('svg', $this->plugin->txt('exp_svg'), $this, 'exportToSvg');
 				$exportgui->addFormat('pdf', $this->plugin->txt('exp_pdf'), $this, 'exportToPdf');
@@ -346,8 +345,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			$ilTabs->addTab('members', $this->txt('members'), $this->ctrl->getLinkTarget($this, 'showParticipantsGallery'));
 		}
 
-		// @todo: Implement export for spreadsheets
-		if($this->object->getDocType() != self::GOOGLE_XLS && $ilAccess->checkAccess('write', '', $this->object->getRefId()))
+		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
 			$ilTabs->addTarget(
 				'export',
@@ -408,15 +406,15 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 		$radio_doctype = new ilRadioGroupInputGUI($this->plugin->txt('doctype'), 'doc_type');
 		$radio_doctype->setRequired(true);
-		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), self::GOOGLE_DOC);
-		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), self::GOOGLE_XLS);
-		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), self::GOOGLE_PPT);
+		$option_1 = new ilRadioOption($this->plugin->txt('doctype_doc'), self::DOC_TYPE_DOCUMENT);
+		$option_2 = new ilRadioOption($this->plugin->txt('doctype_xls'), self::DOC_TYPE_SPREADSHEET);
+		$option_3 = new ilRadioOption($this->plugin->txt('doctype_ppt'), self::DOC_TYPE_PRESENTATION);
 
 		$radio_doctype->addOption($option_1);
 		$radio_doctype->addOption($option_2);
 		$radio_doctype->addOption($option_3);
 
-		$radio_doctype->setValue(self::GOOGLE_DOC);
+		$radio_doctype->setValue(self::DOC_TYPE_DOCUMENT);
 
 		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_owner_info'));
@@ -597,15 +595,15 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$values['title'] = $this->object->getTitle();
 		$values['desc']  = $this->object->getDescription();
 
-		if($this->object->getDocType() == self::GOOGLE_DOC)
+		if($this->object->getDocType() == self::DOC_TYPE_DOCUMENT)
 		{
 			$doc_type = $this->plugin->txt('doctype_doc');
 		}
-		else if($this->object->getDocType() == self::GOOGLE_XLS)
+		else if($this->object->getDocType() == self::DOC_TYPE_SPREADSHEET)
 		{
 			$doc_type = $this->plugin->txt('doctype_xls');
 		}
-		else if($this->object->getDocType() == self::GOOGLE_PPT)
+		else if($this->object->getDocType() == self::DOC_TYPE_PRESENTATION)
 		{
 			$doc_type = $this->plugin->txt('doctype_ppt');
 		}
@@ -891,7 +889,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		{
 			try
 			{
-				if($participants->hasParticipantGoogleAccountById($usr_id))
+				if($participants->hasParticipantByIdGoogleAccount($usr_id))
 				{
 					$this->object->revokeAclPermissions($participants->getGoogleAccountById($usr_id));
 				}

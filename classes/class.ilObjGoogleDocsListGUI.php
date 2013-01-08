@@ -4,10 +4,15 @@
 require_once 'Services/Repository/classes/class.ilObjectPluginListGUI.php';
 
 /**
- * 
+ *
  */
 class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 {
+	/**
+	 * @var array
+	 */
+	protected $commands = array();
+
 	/**
 	 * @return string
 	 */
@@ -40,7 +45,7 @@ class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 	}
 
 	/**
- 	 *
+	 *
 	 */
 	public function initType()
 	{
@@ -57,7 +62,7 @@ class ilObjGoogleDocsListGUI extends ilObjectPluginListGUI
 	{
 		/**
 		 * @var $ilUser ilObjUser
-		 * @var $lng ilLanguage
+		 * @var $lng    ilLanguage
 		 */
 		global $ilUser, $lng;
 

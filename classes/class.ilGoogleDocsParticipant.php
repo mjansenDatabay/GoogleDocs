@@ -116,7 +116,7 @@ class ilGoogleDocsParticipant implements ilGoogleDocsConstants
 			return;
 		}
 
-		$this->roles        = $rbacreview->getRolesOfRoleFolder($rolf['ref_id'], false);
+		$this->roles  = $rbacreview->getRolesOfRoleFolder($rolf['ref_id'], false);
 		$reader_roles = $this->role_data = $this->participants = $this->writers = $this->readers = array();
 
 		foreach($this->roles as $role_id)

@@ -12,7 +12,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	/**
 	 * @var int
 	 */
-	private $doc_type = self::GOOGLE_DOC;
+	private $doc_type = self::DOC_TYPE_DOCUMENT;
 
 	/**
 	 * @var string
@@ -185,7 +185,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param $a_edit_doc_url
+	 * @param string $a_edit_doc_url
 	 */
 	public function setEditDocUrl($a_edit_doc_url)
 	{
@@ -207,9 +207,9 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	protected function beforeCreate()
 	{
 		if(!isset($_POST['doc_type']) || !in_array((int)$_POST['doc_type'], array(
-			self::GOOGLE_DOC,
-			self::GOOGLE_XLS,
-			self::GOOGLE_PPT
+			self::DOC_TYPE_DOCUMENT,
+			self::DOC_TYPE_SPREADSHEET,
+			self::DOC_TYPE_PRESENTATION
 		))
 		)
 		{
@@ -237,7 +237,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		{
 			$api          = ilGoogleDocsAPI::getInstance();
 			$doc_id       = $api->createDocumentByType($this->getTitle(), $this->getDocType());
-			$document     = $api->docs->getDocumentListEntry($doc_id->getText());
+			$document     = $api->getDocumentService()->getDocumentListEntry($doc_id->getText());
 			$edit_doc_url = '';
 			foreach($document->getLink() as $link)
 			{
@@ -323,7 +323,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		try
 		{
 			$api = ilGoogleDocsAPI::getInstance();
-			$api->deleteDocumentByUrl($this->getDocUrl());
+			$api->deleteDocumentByUrl((string)$this->getDocUrl());
 		}
 		catch(Exception $e)
 		{
@@ -357,30 +357,35 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 * @return Zend_Http_Response
 	 * @throws InvalidArgumentException
 	 */
-	public function getExportData($type)
+	public function getExportResponse($type)
 	{
-		$api = ilGoogleDocsAPI::getInstance();
-
 		switch($this->getDocType())
 		{
-			case self::GOOGLE_DOC:
-				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
+			case self::DOC_TYPE_DOCUMENT:
+				$api      = ilGoogleDocsAPI::getInstanceByType(self::DOC_TYPE_DOCUMENT);
+				$document = $api->getDocumentService()->getDocumentListEntry($this->getDocUrl());
 				$id       = preg_replace('/(.*document%3A)/', '', $document->getId());
-				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/documents/Export?docID={$id}&exportFormat={$type}&format={$type}");
+				$response = $api->getDocumentService()->get("https://docs.google.com/feeds/download/documents/Export?docID={$id}&exportFormat={$type}&format={$type}");
 				break;
 
-			// @todo: Implement export for spreadsheets
-			/*case self::GOOGLE_XLS:
-				break;*/
+			case self::DOC_TYPE_SPREADSHEET:
+				$api         = ilGoogleDocsAPI::getInstanceByType(self::DOC_TYPE_SPREADSHEET);
+				$url_parts   = parse_url($this->getEditDocUrl());
+				$query_parts = array();
+				parse_str($url_parts['query'], $query_parts);
+				$spreadsheet_key = $query_parts['key'];
+				$response        = $api->getDocumentService()->get("https://spreadsheets.google.com/feeds/download/spreadsheets/Export?key={$spreadsheet_key}&exportFormat={$type}");
+				break;
 
-			case self::GOOGLE_PPT:
-				$document = $api->getDocs()->getDocumentListEntry($this->getDocUrl());
+			case self::DOC_TYPE_PRESENTATION:
+				$api      = ilGoogleDocsAPI::getInstanceByType(self::DOC_TYPE_PRESENTATION);
+				$document = $api->getDocumentService()->getDocumentListEntry($this->getDocUrl());
 				$id       = preg_replace('/(.*presentation%3A)/', '', $document->getId());
-				$response = $api->getDocs()->get("https://docs.google.com/feeds/download/presentations/Export?docID={$id}&exportFormat={$type}");
+				$response = $api->getDocumentService()->get("https://docs.google.com/feeds/download/presentations/Export?docID={$id}&exportFormat={$type}");
 				break;
 
 			default:
-				throw new InvalidArgumentException("Document type {$this->getDocType()} not supported");
+				throw new InvalidArgumentException("Document type {$this->getDocType()} currently not supported");
 				break;
 		}
 
@@ -403,8 +408,8 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	{
 		$api = ilGoogleDocsAPI::getInstance();
 
-		$document   = $api->getDocs()->getDocumentListEntry((string)$this->getDocUrl());
-		$feed       = $api->getDocs()->getAclFeed($document);
+		$document   = $api->getDocumentService()->getDocumentListEntry((string)$this->getDocUrl());
+		$feed       = $api->getDocumentService()->getAclFeed($document);
 		$role_value = $this->extractAclRoleValue($feed, $participant);
 
 		switch(true)
@@ -433,8 +438,8 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	public function revokeAclPermissions($google_account)
 	{
 		$api      = ilGoogleDocsAPI::getInstance();
-		$document = $api->getDocs()->getDocumentListEntry((string)$this->getDocUrl());
-		$api->getDocs()->deleteAcl($document, $google_account);
+		$document = $api->getDocumentService()->getDocumentListEntry((string)$this->getDocUrl());
+		$api->getDocumentService()->deleteAcl($document, $google_account);
 	}
 
 	/**
@@ -493,7 +498,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 				break;
 
 			default:
-				throw new InvalidArgumentException("Role {$type} is currently not supported for the google docs acl list");
+				throw new InvalidArgumentException("Role {$type} is currently not supported");
 				break;
 		}
 
@@ -503,7 +508,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		$acl_entry = new Zend_Gdata_Docs_AclEntry();
 		$acl_entry->setAclRole($role);
 		$acl_entry->setAclScope($scope);
-		$api->getDocs()->insertAcl($acl_entry, $document);
+		$api->getDocumentService()->insertAcl($acl_entry, $document);
 	}
 
 	/**
@@ -518,15 +523,15 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		switch($type)
 		{
 			case self::GDOC_WRITER:
-				$api->getDocs()->updateAcl($document, $participant->getGoogleAccount(), 'writer');
+				$api->getDocumentService()->updateAcl($document, $participant->getGoogleAccount(), 'writer');
 				break;
 
 			case self::GDOC_READER:
-				$api->getDocs()->updateAcl($document, $participant->getGoogleAccount(), 'reader');
+				$api->getDocumentService()->updateAcl($document, $participant->getGoogleAccount(), 'reader');
 				break;
 
 			default:
-				throw new InvalidArgumentException("Role {$type} is currently not supported for the google docs acl list");
+				throw new InvalidArgumentException("Role {$type} is currently not supported");
 				break;
 		}
 	}
