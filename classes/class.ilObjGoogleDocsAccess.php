@@ -36,12 +36,25 @@ class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 
 		switch($a_permission)
 		{
+			case 'visible':
+				return true;
+				break;
+			
 			case 'write':
 			case 'delete':
-			case 'visible':
 			case 'edit_permission':
 			case 'read':
+				if(
+					!self::_hasReaderRole($ilUser->getId(), $a_ref_id)
+					&&
+					!self::_hasWriterRole($ilUser->getId(), $a_ref_id)
+				)
+				{
+					return false;
+				}
+
 				return true;
+				break;
 		}
 
 		return false;
