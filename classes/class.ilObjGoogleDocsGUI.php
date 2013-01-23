@@ -429,7 +429,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$upload_field->setRequired(true);
 		$action_upload->addSubItem($upload_field);
 
-		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
+		$google_account = new ilEMailInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_owner_info'));
 		$google_account->setRequired(true);
 
@@ -461,7 +461,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$this->google_account_form->setDescription($this->plugin->txt('google_account_participant_form_desc'));
 		$this->google_account_form->setFormAction($ilCtrl->getFormAction($this, 'saveGoogleAccount'));
 
-		$google_account = new ilTextInputGUI($this->plugin->txt('google_account'), 'google_account');
+		$google_account = new ilEMailInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_participant_info'));
 		$google_account->setRequired(true);
 
