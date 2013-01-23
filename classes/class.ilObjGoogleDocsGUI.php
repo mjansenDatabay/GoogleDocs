@@ -20,7 +20,6 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	 */
 	public $object = null;
 
-
 	/**
 	 * @var ilPropertyFormGUI
 	 */
@@ -833,8 +832,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		if(!$user_ids)
 		{
-			ilUtil::sendFailure($this->lng->txt('select_one'));
-			return;
+			ilUtil::sendFailure($this->lng->txt('select_one'), true);
+			return false;
 		}
 
 		$added_users = array();
@@ -872,7 +871,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 		catch(Exception $e)
 		{
-			ilUtil::sendFailure($e->getMessage());
+			ilUtil::sendFailure($e->getMessage(), true);
 			return false;
 		}
 
