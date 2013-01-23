@@ -7,6 +7,7 @@ require_once dirname(__FILE__) . '/../interfaces/interface.ilGoogleDocsConstants
 require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipantsTableGUI.php';
 require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipant.php';
 require_once dirname(__FILE__) . '/class.ilGoogleDocsParticipants.php';
+require_once dirname(__FILE__) . '/Form/class.ilGoogleAccountInputGUI.php';
 require_once 'Services/PersonalDesktop/interfaces/interface.ilDesktopItemHandling.php';
 
 /**
@@ -429,7 +430,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$upload_field->setRequired(true);
 		$action_upload->addSubItem($upload_field);
 
-		$google_account = new ilEMailInputGUI($this->plugin->txt('google_account'), 'google_account');
+		$google_account = new ilGoogleAccountInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_owner_info'));
 		$google_account->setRequired(true);
 
@@ -461,7 +462,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$this->google_account_form->setDescription($this->plugin->txt('google_account_participant_form_desc'));
 		$this->google_account_form->setFormAction($ilCtrl->getFormAction($this, 'saveGoogleAccount'));
 
-		$google_account = new ilEMailInputGUI($this->plugin->txt('google_account'), 'google_account');
+		$google_account = new ilGoogleAccountInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_participant_info'));
 		$google_account->setRequired(true);
 
@@ -548,7 +549,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			$form->addItem($url);
 			$html = $form->getHTML();
 			$tpl->addJavaScript("./Customizing/global/plugins/Services/Repository/RepositoryObject/GoogleDocs/templates/gdocs.js");
-			$content_tpl = new ilTemplate($this->plugin->getDirectory() . '/templates/tpl.content.html', false, false);
+			$content_tpl = $this->plugin->getTemplate('tpl.content.html');
+
 			$content_tpl->setVariable('URL', $this->object->getEditDocUrl());
 
 			$tpl->setPermanentLink($this->object->getType(), $this->object->getRefId());

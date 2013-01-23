@@ -87,3 +87,6 @@ creation_type_new#:#Neues Dokument erstellen
 creation_type_upload#:#Vorhandenes Dokument hochladen
 gdocs_file#:#Datei
 err_cr_upload#:#Die Datei konnte nicht als Google-Dokument hochgeladen werden.
+google_account_not_match#:#Ihre Eingaben für den Google-Account stimmen nicht überein! Bitte geben Sie den Google-Account erneut ein.
+form_retype_google_account#:#Google-Account nochmals eingeben
+google_account_not_valid#:#Der eingegebene Google-Account ist nicht gültig!

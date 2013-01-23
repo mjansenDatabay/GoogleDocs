@@ -87,3 +87,6 @@ creation_type_new#:#Create New Document
 creation_type_upload#:#Upload Existing Document
 gdocs_file#:#File
 err_cr_upload#:#ILIAS could not create a google document with the uploaded file.
+google_account_not_match#:#Your entries for Google account don't match! Please re-enter your Google account.
+form_retype_google_account#:#Retype Google Account
+google_account_not_valid#:#The Google account you entered is not valid!
