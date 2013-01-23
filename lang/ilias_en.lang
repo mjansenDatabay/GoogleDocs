@@ -30,7 +30,7 @@ connection_check_failed#:#Connection failed: Please checker whether you entered 
 check_connection#:#Check Connection
 doctype_doc#:#Document
 doctype_xls#:#Spreadsheet
-doctype_ppt#:#Präsentation
+doctype_ppt#:#Presentation
 doctype#:#Document Type
 doctype_not_valid#:#The chosen document type is currently not supported.
 err_cr_type_mismatch#:#The chosen document type is currently not supported.

@@ -30,7 +30,7 @@ connection_check_failed#:#Verbindung fehlgeschlagen: Bitte überprüfen Sie, ob 
 check_connection#:#Verbindung überprüfen
 doctype_doc#:#Dokument
 doctype_xls#:#Tabelle
-doctype_ppt#:#Presentation
+doctype_ppt#:#Präsentation
 doctype#:#Dokumenten-Typ
 doctype_not_valid#:#Der gewählte Dokumenten-Typ wird aktuell nicht unterstützt.
 err_cr_type_mismatch#:#Der gewählte Dokumenten-Typ wird aktuell nicht unterstützt.
