@@ -78,8 +78,7 @@ exp_ods#:#ODS
 join#:#Join
 joined_successfully#:#You joined successfully.
 google_account_participant_info#:#Please enter your valid Google account. <span style="font-weight:bold;color:red">Important: The entered account has to be valid. Otherwise you will not have any permissions for the created document.</span>
-google_account_participant_form_desc#:#This step only occurs once for this object. We need your Google account to automatically grant the required permissions for you to view/edit the document.
-google_account_participant_form_title#:#Submit Your Google Account
+google_account_participant_desc#:#This object does not know your Google account, yet. We need your Google account to automatically grant the required permissions for you to view/edit the document.
 no_users_assigned_p#:#Nobody of the selected users could be assigned.
 no_users_assigned_s#:#Could not assign the selected user.
 creation_type#:#Action
@@ -90,3 +89,6 @@ err_cr_upload#:#ILIAS could not create a google document with the uploaded file.
 google_account_not_match#:#Your entries for Google account don't match! Please re-enter your Google account.
 form_retype_google_account#:#Retype Google Account
 google_account_not_valid#:#The Google account you entered is not valid!
+personal_settings#:#Personal Settings
+already_member#:#You are already a member of this object.
+membership_required_for_content#:#To use the content of this object you have to be either member of the local reader or member of the local writer role.

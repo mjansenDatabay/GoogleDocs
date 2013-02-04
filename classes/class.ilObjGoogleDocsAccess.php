@@ -9,6 +9,14 @@ require_once 'Services/Repository/classes/class.ilObjectPluginAccess.php';
 class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 {
 	/**
+	 * @var array
+	 */
+	protected static $assigned_roles_cache = array(
+		'readers' => array(),
+		'writers' => array()
+	);
+
+	/**
 	 * @param string $a_cmd
 	 * @param string $a_permission
 	 * @param int    $a_ref_id
@@ -78,10 +86,12 @@ class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 		{
 			if(strpos($role['title'], 'il_xgdo_reader') !== false)
 			{
-				return $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				self::$assigned_roles_cache['readers'][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				return self::$assigned_roles_cache['readers'][$a_user_id];
 			}
 		}
 
+		self::$assigned_roles_cache['readers'][$a_user_id] = false;
 		return false;
 	}
 
@@ -97,16 +107,23 @@ class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 		 */
 		global $rbacreview;
 
+		if(isset(self::$assigned_roles_cache['writers'][$a_user_id]))
+		{
+			return self::$assigned_roles_cache['writers'][$a_user_id];
+		}
+
 		$role_folder = $rbacreview->getRoleFolderOfObject($a_ref_id);
 		$roles       = $rbacreview->getRoleListByObject($role_folder['child']);
 		foreach($roles as $role)
 		{
 			if(strpos($role['title'], 'il_xgdo_writer') !== false)
 			{
-				return $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				self::$assigned_roles_cache['writers'][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				return self::$assigned_roles_cache['writers'][$a_user_id];
 			}
 		}
 
+		self::$assigned_roles_cache['writers'][$a_user_id] = false;
 		return false;
 	}
 

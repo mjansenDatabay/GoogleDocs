@@ -29,7 +29,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	/**
 	 * @var ilPropertyFormGUI
 	 */
-	protected $google_account_form = null;
+	protected $personal_settings_form = null;
 
 	/**
 	 * @return string
@@ -136,6 +136,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 					case 'addToDesk':
 					case 'saveGoogleAccount':
 					case 'removeFromDesk':
+					case 'editPersonalSettings':
+					case 'updatePersonalSettings':
 					case 'showParticipantsGallery':
 					case 'showContent':
 						if(in_array($cmd, array('addToDesk', 'removeFromDesk')))
@@ -321,8 +323,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		 * @var $ilTabs   ilTabsGUI
 		 * @var $ilCtrl   ilCtrl
 		 * @var $ilAccess ilAccessHandler
+		 * @var $ilUser   ilObjUser
 		 */
-		global $ilTabs, $ilCtrl, $ilAccess;
+		global $ilTabs, $ilCtrl, $ilAccess, $ilUser;
 
 		if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
 		{
@@ -330,6 +333,12 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 
 		$this->addInfoTab();
+
+		$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
+		if($participant->isAssigned())
+		{
+			$ilTabs->addTab('personal_settings', $this->txt('personal_settings'), $ilCtrl->getLinkTarget($this, 'editPersonalSettings'));
+		}
 
 		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
@@ -445,54 +454,56 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	/**
 	 * @return ilPropertyFormGUI
 	 */
-	protected function getGoogleAccountInputForm()
+	protected function getPersonalSettingsInputForm()
 	{
 		/**
 		 * @var $ilCtrl ilCtrl
 		 */
 		global $ilCtrl;
 
-		if($this->google_account_form instanceof ilPropertyFormGUI)
+		if($this->personal_settings_form instanceof ilPropertyFormGUI)
 		{
-			return $this->google_account_form;
+			return $this->personal_settings_form;
 		}
 
-		$this->google_account_form = new ilPropertyFormGUI();
-		$this->google_account_form->setTitle($this->plugin->txt('google_account_participant_form_title'));
-		$this->google_account_form->setDescription($this->plugin->txt('google_account_participant_form_desc'));
-		$this->google_account_form->setFormAction($ilCtrl->getFormAction($this, 'saveGoogleAccount'));
+		$this->personal_settings_form = new ilPropertyFormGUI();
+		$this->personal_settings_form->setTitle($this->plugin->txt('personal_settings'));
+		$this->personal_settings_form->setFormAction($ilCtrl->getFormAction($this, 'updatePersonalSettings'));
 
 		$google_account = new ilGoogleAccountInputGUI($this->plugin->txt('google_account'), 'google_account');
 		$google_account->setInfo($this->plugin->txt('google_account_participant_info'));
 		$google_account->setRequired(true);
 
-		$this->google_account_form->addItem($google_account);
+		$this->personal_settings_form->addItem($google_account);
 
-		$this->google_account_form->addCommandButton('saveGoogleAccount', $this->txt('save'));
+		$this->personal_settings_form->addCommandButton('updatePersonalSettings', $this->txt('save'));
 
-		return $this->google_account_form;
+		return $this->personal_settings_form;
 	}
 
 	/**
 	 *
 	 */
-	protected function saveGoogleAccount()
+	protected function updatePersonalSettings()
 	{
 		/**
 		 * @var $tpl    ilTemplate
 		 * @var $lng    ilLanguage
 		 * @var $ilCtrl ilCtrl
 		 * @var $ilUser ilObjUser
+		 * @var $ilTabs ilTabsGUI
 		 */
-		global $tpl, $lng, $ilCtrl, $ilUser;
+		global $tpl, $lng, $ilCtrl, $ilUser, $ilTabs;
 
-		$form = $this->getGoogleAccountInputForm();
+		$ilTabs->activateTab('personal_settings');
+
+		$form = $this->getPersonalSettingsInputForm();
 		if($form->checkInput())
 		{
 			$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
 			$participant->updateGoogleAccount($form->getInput('google_account'));
 			ilUtil::sendSuccess($lng->txt('saved_successfully'), true);
-			$ilCtrl->redirect($this, 'showContent');
+			$ilCtrl->redirect($this, 'editPersonalSettings');
 		}
 
 		$form->setValuesByPost();
@@ -525,8 +536,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
 		if($this->object->hasToSubmitGoogleAccount($participant))
 		{
-			$form = $this->getGoogleAccountInputForm();
-			$tpl->setContent($form->getHTML());
+			ilUtil::sendInfo($this->txt('google_account_participant_desc'), true);
+			$this->ctrl->redirect($this, 'editPersonalSettings');
 		}
 		else if($participant->isAssigned())
 		{
@@ -555,6 +566,10 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 
 			$tpl->setPermanentLink($this->object->getType(), $this->object->getRefId());
 			$tpl->setContent($html . $content_tpl->get());
+		}
+		else
+		{
+			ilUtil::sendInfo($this->txt('membership_required_for_content'), true);
 		}
 	}
 
@@ -1169,6 +1184,30 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		}
 
 		parent::afterSave($newObj);
+	}
+	
+	public function editPersonalSettings()
+	{
+		/**
+		 * @var $ilUser ilObjUser
+		 * @var $tpl    ilTemplate
+		 * @var $ilTabs ilTabsGUI
+		 */
+		global $ilUser, $tpl, $ilTabs;
+
+		$ilTabs->activateTab('personal_settings');
+
+		$participant = ilGoogleDocsParticipant::getInstanceByObjId($this->object->getId(), $ilUser->getId());
+		if(!$participant->isAssigned())
+		{
+			$this->ctrl->redirect($this, 'showContent');
+		}
+
+		$form = $this->getPersonalSettingsInputForm();
+		$form->setValuesByArray(array(
+			'google_account' => $participant->getGoogleAccount()
+		));
+		$tpl->setContent($form->getHTML());
 	}
 
 	/**

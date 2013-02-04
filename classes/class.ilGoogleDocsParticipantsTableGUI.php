@@ -54,7 +54,7 @@ class ilGoogleDocsParticipantsTableGUI extends ilTable2GUI implements ilGoogleDo
 
 		$this->setFormName('participants');
 
-		$this->addColumn('', 'f', "1");
+		$this->addColumn('', '', '1%', true);
 		$this->addColumn($this->lng->txt('name'), 'lastname', '100%');
 
 		if($this->type == self::GDOC_WRITER)
