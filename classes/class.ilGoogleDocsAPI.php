@@ -86,19 +86,17 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	}
 
 	/**
-	 * @param boolean $is_proxy_enabled
+	 * @param $status null|void
+	 * @return void|boolean
 	 */
-	public function setIsProxyEnabled($is_proxy_enabled)
+	public function isProxyEnabled($status = null)
 	{
-		$this->is_proxy_enabled = $is_proxy_enabled;
-	}
+		if(null === $status)
+		{
+			return $this->is_proxy_enabled;
+		}
 
-	/**
-	 * @return boolean
-	 */
-	public function getIsProxyEnabled()
-	{
-		return $this->is_proxy_enabled;
+		$this->is_proxy_enabled = $status; 
 	}
 
 	/**
@@ -164,18 +162,11 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	 */
 	protected function __construct()
 	{
-		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
-		{
-			require_once 'Services/Http/classes/class.ilProxySettings.php';
-		}
-		else
-		{
-			require_once 'classes/class.ilProxySettings.php';
-		}
+		require_once 'Services/Http/classes/class.ilProxySettings.php';
 
 		if(ilProxySettings::_getInstance()->isActive())
 		{
-			$this->setIsProxyEnabled(true);
+			$this->isProxyEnabled(true);
 			$this->setProxyHost(ilProxySettings::_getInstance()->getHost());
 			$this->setProxyPort(ilProxySettings::_getInstance()->getPort());
 		}
@@ -227,25 +218,20 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 			throw new ilException(self::ERROR_ACCOUNT_DATA);
 		}
 
-		if($this->is_proxy_enabled == true)
+		$proxiedHttpClient = null;
+		if($this->isProxyEnabled())
 		{
 			$config = array(
 				'adapter'    => 'Zend_Http_Client_Adapter_Proxy',
 				'proxy_host' => $this->getProxyHost(),
 				'proxy_port' => $this->getProxyPort()
 			);
-
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-			$client            = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), self::getGoogleAuthServiceNameByIliasType($type), $proxiedHttpClient);
-			$this->setClient($client);
-			$this->setDocumentService(self::createGoogleDocumentServiceByIliasType($client, $type));
 		}
-		else
-		{
-			$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), self::getGoogleAuthServiceNameByIliasType($type));
-			$this->setClient($client);
-			$this->setDocumentService(self::createGoogleDocumentServiceByIliasType($client, $type));
-		}
+
+		$client = Zend_Gdata_ClientLogin::getHttpClient($this->getLogin(), $this->getPassword(), self::getGoogleAuthServiceNameByIliasType($type), $proxiedHttpClient);
+		$this->setClient($client);
+		$this->setDocumentService(self::createGoogleDocumentServiceByIliasType($client, $type));
 	}
 
 	/**
@@ -354,15 +340,9 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 	 */
 	public static function checkConnection($login, $password)
 	{
-		if(version_compare(ILIAS_VERSION_NUMERIC, '4.3.0', '>='))
-		{
-			require_once 'Services/Http/classes/class.ilProxySettings.php';
-		}
-		else
-		{
-			require_once 'classes/class.ilProxySettings.php';
-		}
+		require_once 'Services/Http/classes/class.ilProxySettings.php';
 
+		$proxiedHttpClient = null;
 		if(ilProxySettings::_getInstance()->isActive())
 		{
 			$config = array(
@@ -370,18 +350,12 @@ class ilGoogleDocsAPI implements ilGoogleDocsConstants
 				'proxy_host' => ilProxySettings::_getInstance()->getHost(),
 				'proxy_port' => ilProxySettings::_getInstance()->getPort()
 			);
-
 			$proxiedHttpClient = new Zend_Gdata_HttpClient('http://www.google.com:443', $config);
-			$client            = Zend_Gdata_ClientLogin::getHttpClient($login, $password, self::getGoogleAuthServiceNameByIliasType(self::DOC_TYPE_DOCUMENT), $proxiedHttpClient);
-			$docs              = self::createGoogleDocumentServiceByIliasType($client, self::DOC_TYPE_DOCUMENT);
-			$docs->getDocumentListFeed();
 		}
-		else
-		{
-			$client = Zend_Gdata_ClientLogin::getHttpClient($login, $password, self::getGoogleAuthServiceNameByIliasType(self::DOC_TYPE_DOCUMENT));
-			$docs   = self::createGoogleDocumentServiceByIliasType($client, self::DOC_TYPE_DOCUMENT);
-			$docs->getDocumentListFeed();
-		}
+
+		$client = Zend_Gdata_ClientLogin::getHttpClient($login, $password, self::getGoogleAuthServiceNameByIliasType(self::DOC_TYPE_DOCUMENT), $proxiedHttpClient);
+		$docs   = self::createGoogleDocumentServiceByIliasType($client, self::DOC_TYPE_DOCUMENT);
+		$docs->getDocumentListFeed();
 	}
 
 	/**
