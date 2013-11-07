@@ -272,6 +272,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 					'edit_doc_url' => array('text', $this->getEditDocUrl())
 				)
 			);
+			$this->createMetaData();
 		}
 		catch(Exception $e)
 		{
@@ -336,6 +337,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 */
 	public function doUpdate()
 	{
+		$this->updateMetaData();
 	}
 
 	/**
@@ -388,7 +390,7 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 	 * @param int             $a_copy_id
 	 * @throws ilException
 	 */
-	public function doCloneObject($new_obj, $a_target_id, $a_copy_id)
+	public function doCloneObject(ilObjGoogleDocs $new_obj, $a_target_id, $a_copy_id)
 	{
 		throw new ilException('Cloning is currently not implemented');
 	}
