@@ -12,7 +12,7 @@ require_once 'Services/PersonalDesktop/interfaces/interface.ilDesktopItemHandlin
 
 /**
  * @ilCtrl_isCalledBy ilObjGoogleDocsGUI: ilRepositoryGUI, ilAdministrationGUI, ilObjPluginDispatchGUI
- * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI, ilExportGUI
+ * @ilCtrl_Calls      ilObjGoogleDocsGUI: ilPermissionGUI, ilInfoScreenGUI, ilObjectCopyGUI, ilRepositorySearchGUI, ilPublicUserProfileGUI, ilCommonActionDispatcherGUI, ilExportGUI, ilMDEditorGUI
  */
 class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConstants, ilDesktopItemHandling
 {
@@ -71,6 +71,16 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$next_class = $this->ctrl->getNextClass($this);
 		switch($next_class)
 		{
+			case 'ilmdeditorgui':
+				$this->checkPermission('write');
+				require_once 'Services/MetaData/classes/class.ilMDEditorGUI.php';
+				$md_gui = new ilMDEditorGUI($this->object->getId(), 0, $this->object->getType());
+				$md_gui->addObserver($this->object, 'MDUpdateListener', 'General');
+				$ilTabs->setTabActive('meta_data');
+				$this->ctrl->forwardCommand($md_gui);
+				return;
+				break;
+
 			case 'ilpublicuserprofilegui':
 				$ilTabs->activateTab('members');
 
@@ -346,11 +356,8 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
 		{
 			$ilTabs->addTab('properties', $this->txt('properties'), $ilCtrl->getLinkTarget($this, 'editProperties'));
-		}
-
-		if($ilAccess->checkAccess('write', '', $this->object->getRefId()))
-		{
 			$ilTabs->addTab('members', $this->txt('members'), $this->ctrl->getLinkTarget($this, 'editParticipants'));
+			$ilTabs->addTarget('meta_data', $this->ctrl->getLinkTargetByClass('ilmdeditorgui', ''), '', 'ilmdeditorgui');
 		}
 		else if($ilAccess->checkAccess('read', '', $this->object->getRefId()))
 		{
