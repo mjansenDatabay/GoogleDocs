@@ -55,8 +55,11 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 	{
 		/**
 		 * @var $ilTabs ilTabsGUI
+		 * @var $tpl    ilTemplate
 		 */
-		global $ilTabs;
+		global $ilTabs, $tpl;
+
+		$tpl->setDescription($this->object->getDescription());
 
 		$next_class = $this->ctrl->getNextClass($this);
 		switch($next_class)
