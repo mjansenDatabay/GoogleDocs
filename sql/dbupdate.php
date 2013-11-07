@@ -135,3 +135,29 @@ $GLOBALS['rbacadmin']->setRolePermission(
 	ROLE_FOLDER_ID
 );
 ?>
+<#8>
+<?php
+$fields = array(
+	'obj_id' => array(
+		'type'    => 'integer',
+		'length'  => 4,
+		'notnull' => true,
+		'default' => 0
+	),
+	'usr_id' => array(
+		'type'    => 'integer',
+		'length'  => 4,
+		'notnull' => true,
+		'default' => 0
+	),
+	'google_account' => array(
+		'type'    => 'text',
+		'length'  => 255,
+		'notnull' => false,
+		'default' => null
+	)
+);
+
+$ilDB->createTable('rep_robj_xgdo_members', $fields);
+$ilDB->addPrimaryKey('rep_robj_xgdo_members', array('obj_id', 'usr_id'));
+?>

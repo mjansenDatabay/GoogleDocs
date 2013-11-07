@@ -54,7 +54,7 @@ class ilGoogleDocsParticipantsTableGUI extends ilTable2GUI implements ilGoogleDo
 
 		$this->setFormName('participants');
 
-		$this->addColumn('', 'f', "1");
+		$this->addColumn('', '', '1%', true);
 		$this->addColumn($this->lng->txt('name'), 'lastname', '100%');
 
 		if($this->type == self::GDOC_WRITER)
@@ -104,7 +104,7 @@ class ilGoogleDocsParticipantsTableGUI extends ilTable2GUI implements ilGoogleDo
 		{
 			$this->tpl->setVariable('VAL_CHECKBOX', ilUtil::formCheckbox(false, 'readers[]', $data['usr_id']));
 		}
-		
+
 		$this->tpl->setVariable('VAL_NAME', ilUserUtil::getNamePresentation($data['usr_id']));
 
 		if(!$ilAccess->checkAccessOfUser($data['usr_id'], 'read', '', $this->getParentObject()->object->getRefId()) &&
