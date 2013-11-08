@@ -445,7 +445,9 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		$class        = new ReflectionClass('Zend_Gdata_Docs');
 		$property     = $class->getProperty('SUPPORTED_FILETYPES');
 		$property->setAccessible(true);
-		$upload_field->setSuffixes(array_map('strtolower', array_keys($property->getValue())));
+		$suffixes = array_map('strtolower', array_keys($property->getValue()));
+		sort($suffixes);
+		$upload_field->setSuffixes($suffixes);
 		$upload_field->setRequired(true);
 		$action_upload->addSubItem($upload_field);
 

@@ -95,6 +95,14 @@ class Zend_Gdata_Docs extends Zend_Gdata
       'XLS'=>'application/vnd.ms-excel',
       'XLSX'=>'application/vnd.ms-excel',
       'PPT'=>'application/vnd.ms-powerpoint',
+		// databay-patch: begin
+		'DOCX'   => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+		'DOCT'   => 'application/vnd.openxmlformats-officedocument.wordprocessingml.template',
+		'PPTX'   => 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+		'PPSX'   => 'application/vnd.openxmlformats-officedocument.presentationml.slideshow',
+		'SLDX'   => 'application/vnd.openxmlformats-officedocument.presentationml.slide',
+		'XLTX'   => 'application/vnd.openxmlformats-officedocument.spreadsheetml.template',
+		// databay-patch: end
       'PPS'=>'application/vnd.ms-powerpoint');
 
     /**
