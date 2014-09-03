@@ -158,15 +158,16 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 
 			if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
 			{
-				$ref_id = $this->getRefId();
+				$ref_id   = $this->getRefId();
+				$role_arr = $rbacreview->getRolesOfObject($ref_id);
 			}
 			else
 			{
 				$rolf     = $rbacreview->getRoleFolderOfObject($this->getRefId());
 				$ref_id   = $rolf['ref_id'];
+				$role_arr = $rbacreview->getRolesOfRoleFolder($ref_id);
 			}
 
-			$role_arr = $rbacreview->getRolesOfRoleFolder($ref_id);
 			foreach($role_arr as $role_id)
 			{
 				if($rbacreview->isAssignable($role_id, $ref_id))

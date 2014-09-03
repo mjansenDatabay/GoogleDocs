@@ -112,7 +112,7 @@ class ilGoogleDocsParticipant implements ilGoogleDocsConstants
 
 		if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
 		{
-			$this->roles  = $rbacreview->getRolesOfRoleFolder($this->getRefId(), false);
+			$this->roles  = $rbacreview->getRolesOfObject($this->getRefId(), false);
 		}
 		else
 		{
