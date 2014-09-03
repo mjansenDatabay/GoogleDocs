@@ -76,22 +76,35 @@ class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 	public static function _hasReaderRole($a_user_id, $a_ref_id)
 	{
 		/**
-		 * @var $rbacreview    ilRbacReview
+		 * @var $rbacreview ilRbacReview
 		 */
 		global $rbacreview;
 
-		$role_folder = $rbacreview->getRoleFolderOfObject($a_ref_id);
-		$roles       = $rbacreview->getRoleListByObject($role_folder['child']);
+		if(isset(self::$assigned_roles_cache['readers'][$a_ref_id][$a_user_id]))
+		{
+			return self::$assigned_roles_cache['readers'][$a_ref_id][$a_user_id];
+		}
+
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
+		{
+			$roles = $rbacreview->getRoleListByObject($a_ref_id);
+		}
+		else
+		{
+			$role_folder = $rbacreview->getRoleFolderOfObject($a_ref_id);
+			$roles       = $rbacreview->getRoleListByObject($role_folder['child']);
+		}
+
 		foreach($roles as $role)
 		{
 			if(strpos($role['title'], 'il_xgdo_reader') !== false)
 			{
-				self::$assigned_roles_cache['readers'][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
-				return self::$assigned_roles_cache['readers'][$a_user_id];
+				self::$assigned_roles_cache['readers'][$a_ref_id][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				return self::$assigned_roles_cache['readers'][$a_ref_id][$a_user_id];
 			}
 		}
 
-		self::$assigned_roles_cache['readers'][$a_user_id] = false;
+		self::$assigned_roles_cache['readers'][$a_ref_id][$a_user_id] = false;
 		return false;
 	}
 
@@ -107,23 +120,31 @@ class ilObjGoogleDocsAccess extends ilObjectPluginAccess
 		 */
 		global $rbacreview;
 
-		if(isset(self::$assigned_roles_cache['writers'][$a_user_id]))
+		if(isset(self::$assigned_roles_cache['writers'][$a_ref_id][$a_user_id]))
 		{
-			return self::$assigned_roles_cache['writers'][$a_user_id];
+			return self::$assigned_roles_cache['writers'][$a_ref_id][$a_user_id];
 		}
 
-		$role_folder = $rbacreview->getRoleFolderOfObject($a_ref_id);
-		$roles       = $rbacreview->getRoleListByObject($role_folder['child']);
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
+		{
+			$roles = $rbacreview->getRoleListByObject($a_ref_id);
+		}
+		else
+		{
+			$role_folder = $rbacreview->getRoleFolderOfObject($a_ref_id);
+			$roles       = $rbacreview->getRoleListByObject($role_folder['child']);
+		}
+
 		foreach($roles as $role)
 		{
 			if(strpos($role['title'], 'il_xgdo_writer') !== false)
 			{
-				self::$assigned_roles_cache['writers'][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
-				return self::$assigned_roles_cache['writers'][$a_user_id];
+				self::$assigned_roles_cache['writers'][$a_ref_id][$a_user_id] = $rbacreview->isAssigned($a_user_id, $role['rol_id']);
+				return self::$assigned_roles_cache['writers'][$a_ref_id][$a_user_id];
 			}
 		}
 
-		self::$assigned_roles_cache['writers'][$a_user_id] = false;
+		self::$assigned_roles_cache['writers'][$a_ref_id][$a_user_id] = false;
 		return false;
 	}
 

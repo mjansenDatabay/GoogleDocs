@@ -110,13 +110,20 @@ class ilGoogleDocsParticipant implements ilGoogleDocsConstants
 		 */
 		global $rbacreview, $ilObjDataCache;
 
-		$rolf = $rbacreview->getRoleFolderOfObject($this->getRefId());
-		if(!isset($rolf['ref_id']) or !$rolf['ref_id'])
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
 		{
-			return;
+			$this->roles  = $rbacreview->getRolesOfRoleFolder($this->getRefId(), false);
+		}
+		else
+		{
+			$rolf = $rbacreview->getRoleFolderOfObject($this->getRefId());
+			if(!isset($rolf['ref_id']) or !$rolf['ref_id'])
+			{
+				return;
+			}
+			$this->roles  = $rbacreview->getRolesOfRoleFolder($rolf['ref_id'], false);
 		}
 
-		$this->roles  = $rbacreview->getRolesOfRoleFolder($rolf['ref_id'], false);
 		$reader_roles = $this->role_data = $this->participants = $this->writers = $this->readers = array();
 
 		foreach($this->roles as $role_id)

@@ -50,41 +50,67 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		 */
 		global $rbacadmin, $rbacreview, $ilDB;
 
-		$rolf_obj = $this->createRoleFolder();
+		$roles = array();
 
-		/**
-		 * @var $role_obj ilObjRole
-		 */
-		$role_obj = $rolf_obj->createRole('il_xgdo_reader_' . $this->getRefId(), 'Reader of google docs object obj_no.' . $this->getId());
-		$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+		if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
+		{
+			include_once './Services/AccessControl/classes/class.ilObjRole.php';
+			$role    = ilObjRole::createDefaultRole(
+				'il_xgdo_reader_' . $this->getRefId(),
+				'Reader of google docs object obj_no.' . $this->getId(),
+				'il_xgdo_reader',
+				$this->getRefId()
+			);
+			$roles[] = $role->getId();
 
-		$row = $ilDB->fetchAssoc(
-			$ilDB->queryF(
-				$query,
-				array('text', 'text'),
-				array('rolt', 'il_xgdo_reader')
-			)
-		);
-		$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
-		$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
-		$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
+			$role    = ilObjRole::createDefaultRole(
+				'il_xgdo_writer_' . $this->getRefId(),
+				'Writer of google docs object obj_no.' . $this->getId(),
+				'il_xgdo_writer',
+				$this->getRefId()
+			);
+			$roles[] = $role->getId();
+		}
+		else
+		{
+			$rolf_obj = $this->createRoleFolder();
+
+			/**
+			 * @var $role_obj ilObjRole
+			 */
+			$role_obj = $rolf_obj->createRole('il_xgdo_reader_' . $this->getRefId(), 'Reader of google docs object obj_no.' . $this->getId());
+			$roles[]  = $role_obj->getId();
+			$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+
+			$row = $ilDB->fetchAssoc(
+				$ilDB->queryF(
+					$query,
+					array('text', 'text'),
+					array('rolt', 'il_xgdo_reader')
+				)
+			);
+			$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
+			$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
+			$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
 
 
-		$role_obj = $rolf_obj->createRole('il_xgdo_writer_' . $this->getRefId(), 'Writer of google docs object obj_no.' . $this->getId());
-		$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
+			$role_obj = $rolf_obj->createRole('il_xgdo_writer_' . $this->getRefId(), 'Writer of google docs object obj_no.' . $this->getId());
+			$roles[]  = $role_obj->getId();
+			$query    = "SELECT obj_id FROM object_data WHERE type = %s AND title = %s";
 
-		$row = $ilDB->fetchAssoc(
-			$ilDB->queryF(
-				$query,
-				array('text', 'text'),
-				array('rolt', 'il_xgdo_writer')
-			)
-		);
-		$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
-		$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
-		$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
+			$row = $ilDB->fetchAssoc(
+				$ilDB->queryF(
+					$query,
+					array('text', 'text'),
+					array('rolt', 'il_xgdo_writer')
+				)
+			);
+			$rbacadmin->copyRoleTemplatePermissions($row['obj_id'], ROLE_FOLDER_ID, $rolf_obj->getRefId(), $role_obj->getId());
+			$ops = $rbacreview->getOperationsOfRole($role_obj->getId(), 'xgdo', $rolf_obj->getRefId());
+			$rbacadmin->grantPermission($role_obj->getId(), $ops, $this->getRefId());
+		}
 
-		parent::initDefaultRoles();
+		return $roles;
 	}
 
 	/**
@@ -129,12 +155,21 @@ class ilObjGoogleDocs extends ilObjectPlugin implements ilGoogleDocsConstants
 		if(!$this->local_roles)
 		{
 			$this->local_roles = array();
-			$rolf              = $rbacreview->getRoleFolderOfObject($this->getRefId());
-			$role_arr          = $rbacreview->getRolesOfRoleFolder($rolf['ref_id']);
 
+			if(version_compare(ILIAS_VERSION_NUMERIC, '4.5.0') >= 0)
+			{
+				$ref_id = $this->getRefId();
+			}
+			else
+			{
+				$rolf     = $rbacreview->getRoleFolderOfObject($this->getRefId());
+				$ref_id   = $rolf['ref_id'];
+			}
+
+			$role_arr = $rbacreview->getRolesOfRoleFolder($ref_id);
 			foreach($role_arr as $role_id)
 			{
-				if($rbacreview->isAssignable($role_id, $rolf['ref_id']) == true)
+				if($rbacreview->isAssignable($role_id, $ref_id))
 				{
 					$this->local_roles[ilObject::_lookupTitle($role_id)] = $role_id;
 				}
