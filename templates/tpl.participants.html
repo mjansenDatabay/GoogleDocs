@@ -1,4 +1,4 @@
-<form method="post" name="participants" action="{FORMACTION}"><!-- BEGIN writers_block -->
+<form role="form" method="post" name="participants" action="{FORMACTION}"><!-- BEGIN writers_block -->
 	{WRITERS}<br/><!-- END writers_block --><!-- BEGIN readers_block -->
 	{READERS}<br/><!-- END readers_block --><!-- BEGIN table_actions -->
 	<table class="fullwidth" style="clear:both">
@@ -8,8 +8,8 @@
 		<tr>
 			<td class="submit" align="left">
 				<img src="{ARROW_DOWN}" alt="{ARROW_ALT}" border="0"/>
-				<input class="submit" name="cmd[confirmDeleteParticipants]" value="{BTN_FOOTER_VAL}" type="submit"/>
-				<input class="submit" name="cmd[sendMailToSelectedUsers]" value="{BTN_FOOTER_MAIL}" type="submit"/>
+				<input class="btn btn-default" name="cmd[confirmDeleteParticipants]" value="{BTN_FOOTER_VAL}" type="submit"/>
+				<input class="btn btn-default" name="cmd[sendMailToSelectedUsers]" value="{BTN_FOOTER_MAIL}" type="submit"/>
 			</td>
 		</tr>
 	</table><!-- END table_actions -->
