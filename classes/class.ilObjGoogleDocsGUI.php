@@ -723,9 +723,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$this->ctrl->setParameter($this, 'writer_hide', 0);
 				$table->addHeaderCommand(
 					$this->ctrl->getLinkTarget($this, 'editParticipants'),
-					$this->lng->txt('show'),
-					'',
-					ilUtil::getImagePath('edit_add.png')
+					$this->lng->txt('show')
 				);
 				$this->ctrl->clearParameters($this);
 			}
@@ -735,9 +733,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$this->ctrl->setParameter($this, 'writer_hide', 1);
 				$table->addHeaderCommand(
 					$this->ctrl->getLinkTarget($this, 'editParticipants'),
-					$this->lng->txt('hide'),
-					'',
-					ilUtil::getImagePath('edit_remove.png')
+					$this->lng->txt('hide')
 				);
 				$this->ctrl->clearParameters($this);
 				$print_actions = true;
@@ -759,9 +755,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$this->ctrl->setParameter($this, 'reader_hide', 0);
 				$table->addHeaderCommand(
 					$this->ctrl->getLinkTarget($this, 'editParticipants'),
-					$this->lng->txt('show'),
-					'',
-					ilUtil::getImagePath('edit_add.png')
+					$this->lng->txt('show')
 				);
 				$this->ctrl->clearParameters($this);
 			}
@@ -771,9 +765,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 				$this->ctrl->setParameter($this, 'reader_hide', 1);
 				$table->addHeaderCommand(
 					$this->ctrl->getLinkTarget($this, 'editParticipants'),
-					$this->lng->txt('hide'),
-					'',
-					ilUtil::getImagePath('edit_remove.png')
+					$this->lng->txt('hide')
 				);
 				$this->ctrl->clearParameters($this);
 				$print_actions = true;
@@ -793,7 +785,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 		{
 			$participants_tpl->setVariable('BTN_FOOTER_VAL', $this->lng->txt('remove'));
 			$participants_tpl->setVariable('BTN_FOOTER_MAIL', $this->plugin->txt('send_mail'));
-			$participants_tpl->setVariable('ARROW_DOWN', ilUtil::getImagePath('arrow_downright.png'));
+			$participants_tpl->setVariable('ARROW_DOWN', ilUtil::getImagePath('arrow_downright.svg'));
 		}
 
 		$tpl->setContent($participants_tpl->get());
@@ -989,7 +981,7 @@ class ilObjGoogleDocsGUI extends ilObjectPluginGUI implements ilGoogleDocsConsta
 			$confirmation_gui->addItem('participants[]',
 				$usr_id,
 				ilUserUtil::getNamePresentation($usr_id),
-				ilUtil::getImagePath('icon_usr.png')
+				ilUtil::getImagePath('icon_usr.svg')
 			);
 		}
 
