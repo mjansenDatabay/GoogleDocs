@@ -1,4 +1,4 @@
-# ILIAS_AdobeConnectPlugin
+# ILIAS Google Docs Plugin
 ILIAS Plugin for Google Docs Documents
 
 ## Installation Instructions
