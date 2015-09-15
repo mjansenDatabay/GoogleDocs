@@ -81,4 +81,30 @@ class ilGoogleDocsPlugin extends ilRepositoryObjectPlugin
 	{
 		return self::PNAME;
 	}
+
+	/**
+	 * 
+	 */
+	protected function uninstallCustom()
+	{
+		/**
+		 * @var $ilDB ilDB
+		 */
+		global $ilDB;
+
+		if($ilDB->tableExists('rep_robj_xgdo_data'))
+		{
+			$ilDB->dropTable('rep_robj_xgdo_data');
+		}
+
+		if($ilDB->tableExists('rep_robj_xgdo_settings'))
+		{
+			$ilDB->dropTable('rep_robj_xgdo_settings');
+		}
+
+		if($ilDB->tableExists('rep_robj_xgdo_members'))
+		{
+			$ilDB->dropTable('rep_robj_xgdo_members');
+		}
+	}
 }

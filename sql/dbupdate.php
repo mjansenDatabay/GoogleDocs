@@ -1,45 +1,54 @@
 <#1>
 <?php
-$fields = array(
-	'obj_id' => array(
-		'type'    => 'integer',
-		'length'  => 4,
-		'notnull' => true,
-		'default' => 0
-	)
-);
+if(!$ilDB->tableExists('rep_robj_xgdo_data'))
+{
+	$fields = array(
+		'obj_id' => array(
+			'type'    => 'integer',
+			'length'  => 4,
+			'notnull' => true,
+			'default' => 0
+		)
+	);
 
-$ilDB->createTable('rep_robj_xgdo_data', $fields);
-$ilDB->addPrimaryKey('rep_robj_xgdo_data', array('obj_id'));
+	$ilDB->createTable('rep_robj_xgdo_data', $fields);
+	$ilDB->addPrimaryKey('rep_robj_xgdo_data', array('obj_id'));
+}
 ?>
 <#2>
 <?php
+if(!$ilDB->tableExists('rep_robj_xgdo_settings'))
+{
 	$fields = array(
 		'keyword' => array(
-			'type' => 'text',
-			'length' => 50,
+			'type'    => 'text',
+			'length'  => 50,
 			'notnull' => true,
 		),
-		'value' => array(
-			'type' => 'text',
-			'length' => 4000,
+		'value'   => array(
+			'type'    => 'text',
+			'length'  => 4000,
 			"notnull" => false,
 			"default" => null
-		));
+		)
+	);
 
 	$ilDB->createTable("rep_robj_xgdo_settings", $fields);
 	$ilDB->addPrimaryKey('rep_robj_xgdo_settings', array('keyword'));
+}
 ?>
 <#3>
 <?php
- if(!$ilDB->tableColumnExists('rep_robj_xgdo_data','doc_type'))
- {
-	 $ilDB->addTableColumn('rep_robj_xgdo_data','doc_type',
-		 array('type' => 'integer',
-			   'length' => 1,
-			   'notnull' => false,
-			   'default'=> 1 ));
- }
+if(!$ilDB->tableColumnExists('rep_robj_xgdo_data', 'doc_type'))
+{
+	$ilDB->addTableColumn('rep_robj_xgdo_data', 'doc_type',
+		array(
+			'type'    => 'integer',
+			'length'  => 1,
+			'notnull' => false,
+			'default' => 1
+		));
+}
 ?>
 <#4>
 <?php
@@ -137,27 +146,30 @@ $GLOBALS['rbacadmin']->setRolePermission(
 ?>
 <#8>
 <?php
-$fields = array(
-	'obj_id' => array(
-		'type'    => 'integer',
-		'length'  => 4,
-		'notnull' => true,
-		'default' => 0
-	),
-	'usr_id' => array(
-		'type'    => 'integer',
-		'length'  => 4,
-		'notnull' => true,
-		'default' => 0
-	),
-	'google_account' => array(
-		'type'    => 'text',
-		'length'  => 255,
-		'notnull' => false,
-		'default' => null
-	)
-);
+if(!$ilDB->tableExists('rep_robj_xgdo_members'))
+{
+	$fields = array(
+		'obj_id'         => array(
+			'type'    => 'integer',
+			'length'  => 4,
+			'notnull' => true,
+			'default' => 0
+		),
+		'usr_id'         => array(
+			'type'    => 'integer',
+			'length'  => 4,
+			'notnull' => true,
+			'default' => 0
+		),
+		'google_account' => array(
+			'type'    => 'text',
+			'length'  => 255,
+			'notnull' => false,
+			'default' => null
+		)
+	);
 
-$ilDB->createTable('rep_robj_xgdo_members', $fields);
-$ilDB->addPrimaryKey('rep_robj_xgdo_members', array('obj_id', 'usr_id'));
+	$ilDB->createTable('rep_robj_xgdo_members', $fields);
+	$ilDB->addPrimaryKey('rep_robj_xgdo_members', array('obj_id', 'usr_id'));
+}
 ?>
