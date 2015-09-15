@@ -106,5 +106,19 @@ class ilGoogleDocsPlugin extends ilRepositoryObjectPlugin
 		{
 			$ilDB->dropTable('rep_robj_xgdo_members');
 		}
+
+		foreach(array('il_xgdo_reader', 'il_xgdo_writer') as $tpl)
+		{
+			$obj_ids = ilObject::_getIdsForTitle($tpl, 'rolt');
+			foreach($obj_ids as $obj_id)
+			{
+				$obj = ilObjectFactory::getInstanceByObjId($obj_id, false);
+				if(!($obj instanceof ilObjRoleTemplate))
+				{
+					continue;
+				}
+				$obj->delete();
+			}
+		}
 	}
 }
