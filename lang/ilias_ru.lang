@@ -1,0 +1,94 @@
+<!-- language file start -->
+obj_xgdo#:#Документ Google Docs
+objs_xgdo#:#Документы Google Docs
+obj_xgdo_duplicate#:#Копировать
+objs_xgdo_duplicate#:#Копировать документ Google Docs
+xgdo_add#:#Добавить документ Google Docs
+xgdo_new#:#Добавить новый документ Google Docs
+xgdo_read#:#Пользователь может читать документ Google Docs
+xgdo_write#:#Пользователь может редактировать документ Google Docs
+xgdo_delete#:#Пользователь может перемещать или удалять документ Google Docs
+xgdo_edit_permission#:#Пользователь может настраивать параметры доступа
+xgdo_visible#:#Документ Google Docs видимый
+crs_create_xgdo#:#Создать документ Google Docs
+grp_create_xgdo#:#Создать документ Google Docs
+fold_create_xgdo#:#Создать документ Google Docs
+root_create_xgdo#:#Создать документ Google Docs
+cat_create_xgdo#:#Создать документ Google Docs
+content#:#Содержимое
+properties#:#Настройки
+edit_properties#:#Изменить настройки
+title#:#Название
+description#:#Описание
+save#:#Сохранить
+cancel#:#Отмена
+edit#:#Редактировать
+google_master_login#:#Вход в Google
+google_master_login_info#:#<span style="font-weight:bold;color:red">Если настроено, пожалуйста, не меняйте аккаунт Google. В противном случае, ILIAS больше не сможет управлять ранее созданными документами.</span> 
+connection_check_successful#:#Подключение установлено.
+connection_check_failed#:#Не удалось подключиться: проверьте, правильно ли Вы ввели аккаунт Google и соответствующий пароль.
+check_connection#:#Проверка подключения
+doctype_doc#:#Документ
+doctype_xls#:#Таблица
+doctype_ppt#:#Презентация
+doctype#:#Тип документа
+doctype_not_valid#:#Выбранный тип документа в настоящее время не поддерживается.
+err_cr_type_mismatch#:#Выбранный тип документа в настоящее время не поддерживается.
+err_cr_incomplete#:#Произошла ошибка в процессе создания.
+reader_short_add#:#Читатель
+writer_short_add#:#Писатель
+reader#:#Читатель (Может читать)
+writer#:#Редактор (Может писать)
+readers#:#Читатели (Могут читать)
+writers#:#Редакторы (Могут писать)
+participants#:#Участники
+search_users#:#Поиск пользователей
+google_account#:#Ваш аккаунт Google
+google_account_owner_info#:#Введите Ваш аккаунт Google. <span style="font-weight:bold;color:red">Важно: введенный аккаунт должен быть действительным. В противном случае у Вас не будет никаких разрешений для созданного документа.</span>
+participants_removed_s#:#Участник удален.
+participants_removed_p#:#Участники удалены.
+remove_participants_info_s#:#Вы действительно хотите удалить выбранного участника?
+remove_participants_info_p#:#Вы действительно хотите удалить выбранных участников?
+send_mail#:#Отправить письмо участникам
+assigned_users_s#:#Пользователь успешно назначен.
+assigned_users_p#:#Пользователи успешно назначены.
+il_xgdo_writer#:#Писатель
+il_xgdo_reader#:#Читатель
+il_xgdo#:#Google Docs
+participant_administration#:#Редактировать участников
+participant_gallery#:#Участники Google Docs
+members#:#Участники
+exp_pdf#:#PDF
+exp_html#:#HTML
+exp_odt#:#ODT
+exp_docx#:#DOCX
+exp_doc#:#DOC
+exp_zip#:#ZIP
+exp_rtf#:#RTF
+exp_txt#:#TXT
+exp_svg#:#SVG
+exp_pptx#:#PPTX
+exp_png#:#PNG
+exp_jpeg#:#JPEG
+exp_csv#:#CSV
+exp_xls#:#XLS
+exp_xlsx#:#XLSX
+exp_tsv#:#TSV
+exp_ods#:#ODS
+join#:#Присоединиться
+joined_successfully#:#Вы успешно присоединились.
+google_account_participant_info#:#Введите Ваш аккаунт Google. <span style="font-weight:bold;color:red">Важно: введенный аккаунт должен быть действительным. В противном случае у Вас не будет никаких разрешений для созданного документа.</span>
+google_account_participant_desc#:#Этот объект еще не знает Вашу учетную запись Google. Нам нужна Ваша учетная запись Google, чтобы автоматически предоставить необходимые разрешения для просмотра или редактирования документа.
+no_users_assigned_p#:#Никто из выбранных пользователей не может быть назначен.
+no_users_assigned_s#:#Не удалось назначить выбранного пользователя.
+creation_type#:#Дейтвие
+creation_type_new#:#Создать новый документ
+creation_type_upload#:#Загрузить существующий документ
+gdocs_file#:#Файл
+err_cr_upload#:#ILIAS не удалось создать документ Google с загруженным файлом.
+google_account_not_match#:#Ваши данные для учетной записи Google, не совпадают! Пожалуйста, повторно введите Ваш аккаунт Google.
+form_retype_google_account#:#Введите заново аккаунт Google
+google_account_not_valid#:#Введенный Вами аккаунт Google недействителен!
+personal_settings#:#Персональные настройки
+already_member#:#Вы уже являетесь участником этого объекта.
+membership_required_for_content#:#Чтобы использовать содержимое объекта, Вы должны обладать локальной ролью читателя или редактора данного объекта.
